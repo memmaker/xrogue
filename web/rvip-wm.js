@@ -223,7 +223,7 @@
 			});
 			menu.addEventListener('click', function (e) { e.stopPropagation(); });
 			document.addEventListener('click', function () { menu.hidden = true; });
-			document.addEventListener('keydown', function (e) { if (e.key === 'Escape') menu.hidden = true; }, true);
+			document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { menu.hidden = true; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 		}
 		wm.state = function () { return clone(S); };
 		return wm;
@@ -251,17 +251,18 @@
 	window.RvipWM.itemKind = function (text) { for (var i = 0; i < WORDS.length; i++) if (WORDS[i][0].test(text)) return WORDS[i][1]; return null; };
 	window.RvipWM.itemColor = function (text) { var k = window.RvipWM.itemKind(text); return k ? C[k] : null; };
 	window.RvipWM.COLORS = C;
-	/* Visible window: s = lines "M<glyph><name>" (monster) or "I<glyph>[name]"
-	 * (item; without a name the glyph's kind is used) */
+	/* Visible window: s = lines "M<glyph><name>[\t<css colour>]" (monster) or
+	 * "I<glyph>[name][\t<css colour>]" (item; no name: the glyph's kind; no
+	 * colour: the Angband colour of its kind) */
 	window.RvipWM.visible = function (body, s) {
 		if (body._vis === s) return;
 		body._vis = s;
 		var mon = [], itm = [];
 		s.split('\n').forEach(function (l) {
 			if (!l) return;
-			var g = l.charAt(1), name = l.slice(2), kind = GLYPH[g];
-			if (l.charAt(0) === 'M') mon.push([g, name, null]);
-			else itm.push([g, name || kind || 'something', C[window.RvipWM.itemKind(name) || kind]]);
+			var g = l.charAt(1), f = l.slice(2).split('\t'), name = f[0], col = f[1] || null, kind = GLYPH[g];
+			if (l.charAt(0) === 'M') mon.push([g, name, col]);
+			else itm.push([g, name || kind || 'something', col || C[window.RvipWM.itemKind(name) || kind]]);
 		});
 		function group(rows) {                     /* "3 × giant rat" */
 			var out = [], seen = {};
