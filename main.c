@@ -122,6 +122,11 @@ char **envp;
     if (argc == 2)
         if (!restore(argv[1], envp)) /* Note: restore will never return */
             exit_game(0);
+#ifdef __EMSCRIPTEN__
+    /* web: continue the autosave */
+    if (argc < 2 && access(file_name, 0) == 0 && !restore(file_name, envp))
+        exit_game(0);
+#endif
 
     if (wizard && getenv("SEED") != NULL) {
         seed = atoi(getenv("SEED")); 
@@ -185,6 +190,7 @@ char **envp;
     }
 
     keypad(cw, TRUE);
+    wc_mapwin = cw;
     keypad(hw, TRUE);
 
     init_player();                      /* Roll up the rogue */
@@ -435,4 +441,5 @@ int flag;
 
     exit(0);
 }
+
 

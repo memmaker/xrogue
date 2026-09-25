@@ -367,6 +367,7 @@ stomach()
         }
         else if (food_left < 2 * MORETIME && oldfood >= 2 * MORETIME)
         {
+            be_sound("hungry");
             msg(terse ? "Getting hungry" : "You are starting to get hungry");
             running = FALSE;
             hungry_state = F_HUNGRY;

@@ -297,7 +297,7 @@ rs_read_uint(int inf, unsigned int *i)
 rs_read_ulong(int inf, unsigned long *i)
 {
     char bytes[4];
-    unsigned long input;
+    unsigned int input;     /* 4 bytes in the file; long is 8 on arm64 */
     char *buf = (char *) &input;
     
     rs_read(inf, &input, 4);
@@ -311,14 +311,14 @@ rs_read_ulong(int inf, unsigned long *i)
         buf = bytes;
     }
     
-    *i = *((unsigned long *) buf);
+    *i = *((unsigned int *) buf);
     return(READSTAT);
 }
 
 rs_read_long(int inf, long *i)
 {
     char bytes[4];
-    long input;
+    int input;              /* 4 bytes in the file; long is 8 on arm64 */
     char *buf = (char *) &input;
     
     rs_read(inf, &input, 4);
@@ -332,7 +332,7 @@ rs_read_long(int inf, long *i)
         buf = bytes;
     }
     
-    *i = *((long *) buf);
+    *i = *((int *) buf);
     return(READSTAT);
 }
 
@@ -959,15 +959,6 @@ rs_read_coord(int inf, coord *c)
     return(READSTAT);
 }
 
-struct delayed_action {
-    int d_type;
-    int (*d_func)();
-	union {
-		VOID *vp;
-		int  i;
-	} d_arg;
-    int d_time;
-};
 
 rs_write_daemons(FILE *savef, struct delayed_action *d_list,int count)
 {
@@ -1054,10 +1045,10 @@ rs_write_daemons(FILE *savef, struct delayed_action *d_list,int count)
             func = 36;
         else if (d_list[i].d_func == nobolt)
             func = 37;
-        else if (d_list[i].d_func == NULL)
-            func = 0;
+
+
         else
-            func = -1;
+            func = 0;
 
         rs_write_int(savef, d_list[i].d_type);
         rs_write_int(savef, func);
@@ -1083,7 +1074,7 @@ rs_write_daemons(FILE *savef, struct delayed_action *d_list,int count)
         else
             rs_write_int(savef, d_list[i].d_arg.i);
 
-		rs_write_int(savef, d_list[i].d_time);
+        rs_write_int(savef, d_list[i].d_time);
     }
     
     return(WRITESTAT);
@@ -1202,8 +1193,6 @@ rs_read_daemons(int inf, struct delayed_action *d_list, int count)
                                  break;
                         case 37: d_list[i].d_func = nobolt;
                                  break;
-						case 0:
-						case -1:
                         default: d_list[i].d_func = NULL;
                                  break;
                     }
@@ -1235,14 +1224,6 @@ rs_read_daemons(int inf, struct delayed_action *d_list, int count)
                         rs_read_int(inf, &d_list[i].d_arg.i);
 
                     rs_read_int(inf, &d_list[i].d_time);
-
-					if (d_list[i].d_func == NULL) 
-					{
-						d_list[i].d_time = 0;
-						d_list[i].d_arg.vp = NULL;
-						d_list[i].d_type = 0;
-					}
-
                 }
             }
         }
@@ -3032,9 +3013,11 @@ md_gethomedir()
 #else
     char slash = '/';
     struct passwd *pw;
-    pw = getpwuid(getuid());
-
-    h = pw->pw_dir;
+    /* $HOME first, so play.sh (and tests) decide where saves go */
+    if ((h = getenv("HOME")) == NULL || *h == '\0') {
+        pw = getpwuid(getuid());
+        h = pw->pw_dir;
+    }
 
     if (strcmp(h,"/") == 0)
         h = NULL;

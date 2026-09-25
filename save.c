@@ -86,6 +86,9 @@ gotfile:
         return(FALSE);
     }
     fclose(savef);
+#ifdef __EMSCRIPTEN__
+    wc_saved = TRUE;            /* keep the file (be_web.c) */
+#endif
     return(TRUE);
 }
 
@@ -194,6 +197,7 @@ char **envp;
     msgw = newwin(4, cols, 0, 0);
 
     keypad(cw, TRUE);
+    wc_mapwin = cw;
     keypad(hw, TRUE);
 
     if (rs_restore_file(inf) == FALSE)
@@ -206,8 +210,10 @@ char **envp;
 
     close(inf);
 
+#ifndef __EMSCRIPTEN__         /* web: kept as the autosave, removed at game end */
     if (!wizard)
         unlink(file);
+#endif
  
     mpos = 0;
     environ = envp;

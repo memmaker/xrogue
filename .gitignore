@@ -1,0 +1,7 @@
+
+# RVIP port: build output, binaries, local saves
+web/dist/
+/xrogue
+/xrogue-x11
+*.dSYM/
+*.o

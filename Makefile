@@ -25,7 +25,8 @@ OBJS1 =	vers.$(O) actions.$(O) bolt.$(O) chase.$(O) command.$(O) daemon.$(O) \
 OBJS2 = mons_def.$(O) move.$(O) n_level.$(O) options.$(O) outside.$(O) pack.$(O) \
         passages.$(O) player.$(O) potions.$(O) rings.$(O) rip.$(O) rooms.$(O) \
         save.$(O) scrolls.$(O) sticks.$(O) things.$(O) trader.$(O) util.$(O) \
-        weapons.$(O) wear.$(O) wizard.$(O) rogue.$(O) state.$(O) xcrypt.$(O)
+        weapons.$(O) wear.$(O) wizard.$(O) rogue.$(O) state.$(O) xcrypt.$(O) \
+        explore.$(O)
 OBJS  = $(OBJS1) $(OBJS2)
 
 CFILES=	vers.c actions.c bolt.c chase.c command.c daemon.c daemons.c eat.c \
@@ -33,7 +34,7 @@ CFILES=	vers.c actions.c bolt.c chase.c command.c daemon.c daemons.c eat.c \
 	misc.c monsters.c mons_def.c move.c n_level.c options.c outside.c \
 	pack.c passages.c player.c potions.c rings.c rip.c rooms.c save.c \
 	scrolls.c sticks.c things.c trader.c util.c weapons.c wear.c wizard.c \
-	rogue.c state.c xcrypt.c
+	rogue.c state.c xcrypt.c explore.c
 
 MISC  = Makefile README.TXT LICENSE.TXT $(PROGRAM).sln $(PROGRAM).vcproj
 
@@ -113,3 +114,9 @@ dist.win32:
 	nmake O="obj" CC="CL" CRLIB="..\pdcurses.lib shell32.lib user32.lib Advapi32.lib Ws2_32.lib" CFLAGS="-DPDC_STATIC_BUILD -nologo -I.. -Ox -wd4033 -wd4716" $(PROGRAM)
 	-del $(DISTNAME)-win32.zip
 	zip $(DISTNAME)-win32.zip $(PROGRAM).exe README.TXT LICENSE.TXT
+
+# macOS/XQuartz build with the curses shim and NetHack tiles (RVIP)
+XFLAGS = -O2 -g -std=gnu89 -w -Wno-implicit-function-declaration -Wno-implicit-int -Wno-return-type -Wno-int-conversion -Wno-incompatible-pointer-types -Iport -I/opt/X11/include -I/opt/X11/include/freetype2
+PORTSRC = port/wcurses.c port/tiles.c port/be_x11.c
+xrogue-x11: $(CFILES) $(HDRS) $(PORTSRC) port/curses.h port/tilemap.h
+	$(CC) $(XFLAGS) $(EXTRA) $(CFILES) $(PORTSRC) -L/opt/X11/lib -lX11 -lXft -lfontconfig -o $@

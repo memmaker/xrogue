@@ -357,6 +357,7 @@ wield()
                 addmsg("Was ");
             else
                 addmsg("You were ");
+            be_sound("wield");
             msg("wielding %s", inv_name(oweapon, TRUE));
         }
 

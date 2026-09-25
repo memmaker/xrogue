@@ -79,6 +79,7 @@ register short monst;
     char buf[LINELEN];
     struct tm *localtime();
 
+    be_sound("death");
     time(&date);
     lt = localtime(&date);
     clear();

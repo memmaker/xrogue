@@ -181,8 +181,10 @@ static struct h_list helpstr[] = {
     'B',        "    Run down & left",
     'N',        "    Run down & right",
     ' ',        "",
-    '>',        "    Go down a staircase",
-    '<',        "    Go up a staircase",
+    '>',        "    Go down (walks to known stairs)",
+    '<',        "    Go up (walks to known stairs)",
+    'x',        "   Explore (any key stops)",
+    '\r',       "   Menu of all commands (Enter)",
     '\\',        "  Game descriptions",
     '.',        "   Rest for a while",
     '*',        "   Count gold pieces",
@@ -221,7 +223,6 @@ static struct h_list helpstr[] = {
     '$',        "   Price an item (trading post)",
     '#',        "   Buy an item   (trading post)",
     '%',        "   Sell an item  (trading post)",
-    '!',        "   Shell escape",
     ESC,        "   Cancel command (Esc)",
     ' ',        "",
     CTRL('B'),    " Current score (if you win)",
@@ -649,3 +650,181 @@ register unsigned char ch;
 }
 
 
+
+/*
+ * cmd_menu:
+ *      Enter: a floating menu of every command (RVIP), the groups of the
+ *      '*' help list, then the commands of a group.  Returns the key of
+ *      the chosen command, or ESC.
+ */
+
+static char *cmd_groups[] = {
+    "Help", "Move and run", "Actions", "Traps and trading post", "Control keys"
+};
+
+/* Arrow keys / numpad 8 2 move, Enter / 5 / Space / 6 choose, Esc / 4 / 0
+ * / . back.  A key of an entry chooses it; + - * choose the highlighted
+ * one.  Returns the index (menu_key says how) or -1. */
+int menu_key;
+
+int
+menu(title, items, keys, n)
+char *title, **items, *keys;
+int n;
+{
+    int cur = 0, top = 0, rows = min(n, lines - 2), w = strlen(title), i, c;
+
+    for (i = 0; i < n; i++) w = max(w, (int)strlen(items[i]));
+    for (;;) {
+        if (cur < top) top = cur;
+        if (cur >= top + rows) top = cur - rows + 1;
+        werase(hw);
+        mvwaddstr(hw, 0, 0, title);
+        for (i = top; i < top + rows; i++) {
+            wmove(hw, i - top + 1, 0);
+            if (i == cur) wstandout(hw);
+            wprintw(hw, "%-*s", w, items[i]);
+            if (i == cur) wstandend(hw);
+        }
+        wmove(hw, cur - top + 1, 0);
+        draw(hw);
+        menu_key = c = wgetch(hw);
+        if (c == KEY_UP) cur = (cur + n - 1) % n;
+        else if (c == KEY_DOWN) cur = (cur + 1) % n;
+        else if (c == '\r' || c == '\n' || c == ' ' || c == KEY_B2 || c == KEY_RIGHT) {
+            menu_key = '\r';
+            return cur;
+        }
+        else {
+            for (i = 0; keys && i < n; i++) if (keys[i] == c) return i;
+            if (c == '+' || c == '-' || c == '*') return cur;
+            if (c == ESC || c == KEY_LEFT || c == '0' || c == '.') return -1;
+        }
+    }
+}
+
+int
+cmd_menu()
+{
+    struct h_list *h;
+    char *items[80], keys[80], text[80][48];
+    int g, n, i, grp;
+
+    for (;;) {
+        char *gi[5], gk[5], gt[5][40];
+        for (g = 0; g < 5; g++) {
+            sprintf(gt[g], "%c) %s", 'a' + g, cmd_groups[g]);
+            gi[g] = gt[g]; gk[g] = 'a' + g;
+        }
+        if ((g = menu("Commands", gi, gk, 5)) < 0) break;
+        for (grp = 0, n = 0, h = helpstr; h->h_ch && n < 80; h++) {
+            if (h->h_ch == ' ') { grp++; continue; }
+            if (grp != g || h->h_ch == '\r' || h->h_ch == ESC) continue;
+            {
+                char *d = h->h_desc, k[12];
+                strcpy(k, unctrl(h->h_ch));
+                if (!strncmp(d, "<dir>", 5)) { strcat(k, "<dir>"); d += 5; }
+                while (*d == ' ') d++;
+                sprintf(text[n], " %-8s %s", k, d);
+            }
+            items[n] = text[n]; keys[n++] = h->h_ch;
+        }
+        if ((i = menu(cmd_groups[g], items, keys, n)) >= 0 && menu_key != '-' && menu_key != '+') {
+            restscr(cw);
+            return keys[i];
+        }
+    }
+    restscr(cw);
+    return ESC;
+}
+
+/*
+ * Inventory with a cursor (RVIP 3c).  inv_menu() returns the command key
+ * for the chosen action and leaves the item in inv_pick, which get_item()
+ * hands to that command.  inv_again reopens the list afterwards.
+ */
+
+struct linked_list *inv_pick;
+int inv_again;
+
+static int
+worn(o)
+struct object *o;
+{
+    int i;
+    if (o == cur_weapon || o == cur_armor) return TRUE;
+    for (i = 0; i < NUM_FINGERS; i++) if (cur_ring[i] == o) return TRUE;
+    for (i = 0; i < NUM_MM; i++) if (cur_misc[i] == o) return TRUE;
+    return FALSE;
+}
+
+/* The actions that fit an item, main one first.  The commands do their
+ * own checks, so offering one too many is harmless. */
+static int
+item_actions(o, keys, names)
+struct object *o;
+char *keys, **names;
+{
+    int n = 0;
+#define ACT(k, s) (keys[n] = (k), names[n++] = (s))
+    if (worn(o) && o != cur_weapon) ACT(C_TAKEOFF, "Take off");
+    switch (o->o_type) {
+        case POTION: ACT(C_QUAFF, "Quaff"); break;
+        case SCROLL: ACT(C_READ, "Read"); break;
+        case FOOD:   ACT(C_EAT, "Eat"); ACT('g', "Give to a monster"); break;
+        case WEAPON: if (o != cur_weapon) ACT(C_WIELD, "Wield");
+                     ACT('t', "Throw"); break;
+        case ARMOR:
+        case RING:   if (!worn(o)) ACT(C_WEAR, "Wear / put on"); break;
+        case STICK:  ACT(C_ZAP, "Zap"); break;
+        case MM:
+        case RELIC:  ACT(C_USE, "Use");
+                     if (!worn(o)) ACT(C_WEAR, "Wear");
+                     if (o->o_type == RELIC && o != cur_weapon) ACT(C_WIELD, "Wield");
+                     break;
+    }
+    ACT(C_DROP, "Drop");
+    ACT(C_DIP, "Dip into a pool");
+    ACT('m', "Mark");
+    ACT(CTRL('N'), "Name");
+    return n;
+#undef ACT
+}
+
+int
+inv_menu()
+{
+    struct linked_list *l, *it[MAXPACK + 30];
+    char *items[MAXPACK + 30], keys[MAXPACK + 30], text[MAXPACK + 30][LINELEN];
+    char ak[16], *an[16], at[16][LINELEN], *ai[16];
+    int n = 0, i, j, na, ch = 'a';
+
+    for (l = pack; l && n < MAXPACK + 30; l = next(l), n++, ch = ch == 'z' ? 'A' : ch + 1) {
+        sprintf(text[n], "%c) %s", ch, inv_name(OBJPTR(l), FALSE));
+        items[n] = text[n]; keys[n] = ch; it[n] = l;
+    }
+    if (!n) {
+        msg("You aren't carrying anything.");
+        return ESC;
+    }
+    for (;;) {
+        if ((i = menu("Inventory: letter/+ use, - drop, Enter actions, Esc close",
+                      items, keys, n)) < 0) break;
+        na = item_actions(OBJPTR(it[i]), ak, an);
+        if (menu_key == '-') j = na - 4;                /* Drop */
+        else if (menu_key != '\r') j = 0;               /* main action */
+        else {
+            for (j = 0; j < na; j++) {
+                sprintf(at[j], " %-3s %s", unctrl(ak[j]), an[j]);
+                ai[j] = at[j];
+            }
+            if ((j = menu(items[i], ai, ak, na)) < 0) continue;
+        }
+        inv_pick = it[i];
+        inv_again = TRUE;
+        restscr(cw);
+        return ak[j];
+    }
+    restscr(cw);
+    return ESC;
+}

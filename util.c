@@ -156,6 +156,7 @@ check_level()
         max_stats.s_hpt += add;
         if ((pstats.s_hpt += add) > max_stats.s_hpt)
             pstats.s_hpt = max_stats.s_hpt;
+        be_sound("level");
         msg("Welcome, %s, to level %d",
             cnames[player.t_ctype][min(i-1, NUM_CNAMES-1)], i);
     }

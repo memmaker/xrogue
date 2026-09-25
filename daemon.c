@@ -24,12 +24,6 @@
 
 #define _X_ { EMPTY }
 
-struct delayed_action {
-        int d_type;
-        int (*d_func)();
-        VOID *d_arg;
-        int d_time;
-} ;
 struct delayed_action d_list[MAXDAEMONS] = {
         _X_, _X_, _X_, _X_, _X_, _X_, _X_, _X_, _X_, _X_
 };
@@ -107,7 +101,7 @@ reg int type, (*dfunc)();
         if (dev != NULL) {
                 dev->d_type = type;
                 dev->d_func = dfunc;
-                dev->d_arg = arg;
+                dev->d_arg.vp = arg;
                 dev->d_time = DAEMON;
                 demoncnt += 1;                  /* update count */
         }
@@ -133,10 +127,6 @@ reg int (*dfunc)();
          * Take it out of the list
          */
         dev->d_type = EMPTY;
-		dev->d_arg  = NULL;
-		dev->d_func = NULL;
-		dev->d_time = 0;
-
         demoncnt -= 1;                  /* update count */
 }
 
@@ -161,8 +151,8 @@ reg int flag;
         /*
          * Executing each one, giving it the proper arguments
          */
-                if ((dev->d_type == flag) && (dev->d_time == DAEMON) && (dev->d_func != NULL))
-                        (*dev->d_func)(dev->d_arg);
+                if (dev->d_type == flag && dev->d_time == DAEMON)
+                        (*dev->d_func)(dev->d_arg.vp);
         }
 }
 
@@ -181,7 +171,7 @@ reg int (*dfunc)(), time, type;
         if (wire != NULL) {
                 wire->d_type = type;
                 wire->d_func = dfunc;
-                wire->d_arg = arg;
+                wire->d_arg.vp = arg;
                 wire->d_time = time;
                 fusecnt += 1;                   /* update count */
         }
@@ -215,9 +205,6 @@ reg int (*dfunc)();
         if ((wire = find_slot(dfunc)) == NULL)
                 return;
         wire->d_type = EMPTY;
-		wire->d_func = NULL;
-		wire->d_arg = NULL;
-		wire->d_time = 0;
         fusecnt -= 1;
 }
 
@@ -244,8 +231,7 @@ reg int flag;
             if(flag == wire->d_type && wire->d_time > 0 &&
               --wire->d_time == 0) {
                 wire->d_type = EMPTY;
-				if (wire->d_func != NULL)
-					(*wire->d_func)(wire->d_arg);
+                (*wire->d_func)(wire->d_arg.vp);
                 fusecnt -= 1;
             }
         }

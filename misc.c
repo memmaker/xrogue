@@ -987,6 +987,7 @@ int which;
             if (food_left >= MORETIME + 5) {
                 food_left = MORETIME + 5;
                 msg("A strange sensation comes over you.. ");
+                be_sound("hungry");
                 msg(terse? "Getting hungry" : "You are starting to get hungry");
                 hungry_state = F_HUNGRY;
             }

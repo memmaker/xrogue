@@ -64,6 +64,7 @@ bool silent;
 
         if (!silent) {
             if (!terse) addmsg("You found ");
+            be_sound("money1");
             msg("%d gold pieces.", obj->o_count);
         }
 
@@ -665,6 +666,40 @@ bool askfirst, showcost;
         if (purpose) msg("Nothing to %s", purpose);
         after = FALSE;
         return NULL;
+    }
+
+    /* RVIP 3c: the item chosen in the inventory, else a list with a cursor */
+    if (inv_pick && list == player.t_pack) {
+        item = inv_pick;
+        inv_pick = NULL;
+        if (is_type(OBJPTR(item), type)) return item;
+        msg("You can't %s that!", purpose ? purpose : "use");
+        after = FALSE;
+        return NULL;
+    }
+    if (purpose && !confused) {
+        struct linked_list *it[MAXPACK + 30];
+        char *items[MAXPACK + 30], keys[MAXPACK + 30], text[MAXPACK + 30][2*LINELEN];
+        int n = 0, i;
+
+        for (item = list, och = 'a'; item && n < MAXPACK + 30; item = next(item),
+             och = och == 'z' ? 'A' : och + 1) {
+            if (!is_type(OBJPTR(item), type)) continue;
+            cost[0] = '\0';
+            if (showcost) sprintf(cost, "[%ld] ", get_worth(OBJPTR(item)));
+            sprintf(text[n], "%c) %s%s", och, cost, inv_name(OBJPTR(item), FALSE));
+            items[n] = text[n]; keys[n] = och; it[n++] = item;
+        }
+        sprintf(description, "%s what?", cap_purpose);
+        i = menu(description, items, keys, n);
+        touchwin(cw);                   /* closes the list */
+        draw(cw);
+        if (i < 0) {
+            after = FALSE;
+            msg("");
+            return NULL;
+        }
+        return it[i];
     }
     else if (cnt == 1) {        /* only found one of 'em */
         obj = OBJPTR(saveitem);

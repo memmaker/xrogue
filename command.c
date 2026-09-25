@@ -112,10 +112,21 @@ command()
                     ch = runch;
                 }
                 else if (count) ch = countch;
+                else if (explore_mode && (ch = explore_step()) != 0)
+                    ;
                 else {
-                    ch = wgetch(cw);
+                    inv_pick = NULL;
+                    if (inv_again && !(inv_again = 0) && !monster_in_view())
+                        ch = 'i';       /* reopen the inventory (RVIP 3c) */
+                    else {
+                        wc_cmd_prompt = 1;      /* web autosave may run now */
+                        ch = wgetch(cw);
+                        wc_cmd_prompt = 0;
+                    }
                     if (mpos != 0 && !running)  /* Erase message if its there */
                         msg("");
+                    if (ch == '\r' || ch == '\n') ch = cmd_menu();
+                    if (ch == 'i') ch = inv_menu();
                 }
 
                 /*
@@ -187,8 +198,8 @@ command()
                     count--;
 
                 switch (ch) {
-                    case '!' : shell();
-                    case KEY_LEFT       : do_move(0, -1);
+                    case '!' : after = FALSE; msg("There is no shell here.");
+                    when KEY_LEFT       : do_move(0, -1);
                     when KEY_DOWN       : do_move(1, 0);
                     when KEY_UP         : do_move(-1, 0);
                     when KEY_RIGHT      : do_move(0, 1);
@@ -286,7 +297,7 @@ command()
                         else {
                 after = FALSE;
                             player.t_action = A_NIL;
-                            fright();
+                            fright(NULL);
                         }
                     when 'g' : /* Give command: give slime-molds to monsters */
                         if (player.t_action == A_NIL) {
@@ -296,7 +307,7 @@ command()
                         else {
                 after = FALSE;
                             player.t_action = A_NIL;
-                            give();
+                            give(NULL);
                         }
                     when 'G' :
                         if (player.t_action == A_NIL) {
@@ -345,8 +356,11 @@ command()
                         player.t_no_move = movement(&player);  /* Rest */
                         player.t_action = A_NIL;
                     when ' ' : after = FALSE;   /* Do Nothing */
-                    when '>' : after = FALSE; d_level();
-                    when '<' : after = FALSE; u_level();
+                    when '>' : after = FALSE;
+                               if (explore_stairs('>')) d_level();
+                    when '<' : after = FALSE;
+                               if (explore_stairs('<')) u_level();
+                    when 'x' : after = FALSE; explore_mode = 'x';
                     when '=' : after = FALSE; display();
                     when '?' : after = FALSE; help();
 
@@ -863,6 +877,7 @@ d_level()
     /* If we are on a trading post, go to a trading post level. */
     if (position == POST) {
         take_with();   /* Take charmed monsters with you while shopping */
+        be_sound("stairs_down");
         new_level(POSTLEV);
         return;
     }
@@ -922,6 +937,7 @@ d_level()
     if (levtype == OUTSIDE) {
             level++;
             take_with();
+            be_sound("stairs_down");
             new_level(NORMLEV);
             if (no_phase) unphase();
             return;
@@ -945,6 +961,7 @@ d_level()
 
     level++;
     take_with();
+    be_sound("stairs_down");
     new_level(NORMLEV);
     if (no_phase) unphase();
 }
@@ -970,6 +987,7 @@ u_level()
             msg("You find yourself in strange surroundings... ");
         if (wizard) addmsg("Going up through a worm hole. ");
             take_with();
+            be_sound("stairs_up");
             new_level(OUTSIDE);
             return;
    }
@@ -1016,6 +1034,7 @@ u_level()
     level--;
     if (level > 0) {
         take_with();
+        be_sound("stairs_up");
         new_level(NORMLEV);
     }
     else if (cur_max > level) {
@@ -1025,6 +1044,7 @@ u_level()
         msg("You emerge into the %s. ", daytime ? "eerie light" : "dark night");
     if (wizard) msg("Going up: cur_max=%d level=%d. ", cur_max, level);
         take_with();
+        be_sound("stairs_up");
         new_level(OUTSIDE);     /* Leaving the dungeon for outside */
     return;
  }
@@ -1034,6 +1054,7 @@ u_level()
         msg("You emerge into the %s. ", daytime ? "eerie light" : "dark night");
     if (wizard) msg("Going up: cur_max=%d level=%d. ", cur_max, level);
         take_with();
+        be_sound("stairs_up");
         new_level(OUTSIDE); 
     return;
     }

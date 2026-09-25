@@ -67,6 +67,7 @@ buy_it()
             trans_line();               /* show remaining deals */
             curprice = -1;              /* reset stuff */
             curpurch[0] = 0;
+            be_sound("store5");
             if (!wasfood) /* if it was food then the object has been deleted */
             {
                 whatis (item);              /* identify it */

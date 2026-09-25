@@ -20,6 +20,14 @@
  * some compiler don't handle void pointers well so
  */
 #include <assert.h>
+
+/* sound events (port/curses.h); silent in the plain ncurses build */
+#ifndef XR_SHIM
+#define be_sound(event) ((void) 0)
+#endif
+#include <stdlib.h>
+#include <string.h>
+#define daemon xr_daemon   /* libc has a daemon() too */
 #define reg  register
 #define VOID long
 #undef lines
@@ -927,6 +935,15 @@
 #define MAXDAEMONS      10
 #define MAXFUSES        20
 
+struct delayed_action {
+        int d_type;
+        int (*d_func)();
+        union {
+                VOID *vp;
+                int  i;
+        } d_arg;
+        int d_time;
+} ;
 extern struct delayed_action d_list[MAXDAEMONS];
 extern struct delayed_action f_list[MAXFUSES];
 extern int demoncnt;        /* number of active daemons */
@@ -1403,3 +1420,15 @@ extern struct words stones[NSTONES];
 extern struct words wood[NWOOD];
 extern struct words metal[NMETAL];
 
+
+/* Prototypes the 64-bit build needs (RVIP port): variadic functions and
+ * functions returning pointers or longs must be declared before use. */
+void msg(char *fmt, ...);
+void addmsg(char *fmt, ...);
+struct delayed_action *find_slot();
+long md_ntohl(), md_htonl(), md_memused();
+extern int explore_mode;
+/* void functions called before their definition (WebAssembly checks return types) */
+void picky_inven(), init_terrain(), do_terrain(), explore_reset();
+extern struct linked_list *inv_pick;
+extern int inv_again;

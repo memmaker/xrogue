@@ -318,6 +318,7 @@ bool is_potion;
             return;
         }
 
+        be_sound("quaff");
         /* We have waited our time, let's quaff the potion */
         item = player.t_using;
         player.t_using = NULL;

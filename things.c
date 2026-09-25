@@ -462,6 +462,7 @@ struct linked_list *item;
         attach(lvl_obj, obj);
         mvaddch(hero.y, hero.x, op->o_type);
         op->o_pos = hero;
+        be_sound("drop");
         msg("Dropped %s", inv_name(op, TRUE));
     }
     updpack(FALSE, &player);

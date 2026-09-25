@@ -45,6 +45,8 @@ LEVTYPE ltype;          /* designates type of level to create */
         mpos = 0;
     }
 
+    explore_reset();
+
     /* Start player off right */
     turn_off(player, ISHELD);
     turn_off(player, ISFLEE);
