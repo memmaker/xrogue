@@ -292,3 +292,5 @@ void be_sound(const char *s) { }
 
 void be_end(void) { if (dpy) XCloseDisplay(dpy); dpy = NULL; }
 void be_invfg(int y, const char *css) { }
+
+void be_prompt(const char *s) { }   /* web only: the prompt line over the map */

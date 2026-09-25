@@ -338,6 +338,7 @@ static void msg_refresh(WINDOW *w)
     int y, x, n = 0;
     for (x = 0; x < w->maxx && x < 511; x++) r[x] = w->c[x] & A_CHARTEXT;
     for (r[x] = 0; x && r[x - 1] == ' '; ) r[--x] = 0;
+    be_prompt(r);                   /* the prompt line over the map */
     if (morestr && (m = strstr(r, morestr))) *m = 0;
     for (n = strlen(r); n && r[n - 1] == ' '; ) r[--n] = 0;
     /* a message went away (not just grew): into the history */

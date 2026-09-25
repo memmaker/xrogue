@@ -14,7 +14,9 @@ EM_JS(void, js_put, (int p, int y, int x, int ch, int t, int u), { Module.xr.put
 EM_JS(void, js_cursor, (int p, int y, int x), { Module.xr.cursor(p, y, x); });
 EM_JS(void, js_popup, (int r, int c), { Module.xr.popup(r, c); });
 EM_JS(void, js_flush, (int lvl, int music, int hy, int hx), { Module.xr.flush(lvl, music, hy, hx); });
-EM_JS(int, js_key, (void), { return Module.xr.key(); });
+EM_JS(int, js_key, (int at_cmd), { return Module.xr.key(at_cmd); });
+EM_JS(void, js_prompt, (const char *s), { Module.xr.prompt(UTF8ToString(s)); });
+void be_prompt(const char *s) { js_prompt(s); }
 EM_JS(int, js_want_save, (void), { return Module.xr.wantSave(); });
 EM_JS(void, js_sound, (const char *s), { Module.xr.sound(UTF8ToString(s)); });
 EM_JS(void, js_end, (int saved, int dead), { Module.xr.end(saved, dead); });
@@ -81,7 +83,7 @@ int be_getkey(int wait)
     int k;
     for (;;) {
         if (wc_cmd_prompt && js_want_save()) autosave();
-        if ((k = js_key()) >= 0) return k;
+        if ((k = js_key(wc_cmd_prompt)) >= 0) return k;
         if (!wait) {                /* polling (explore, running): let the page paint */
             if (emscripten_get_now() - last > 50) {
                 last = emscripten_get_now();
