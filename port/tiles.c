@@ -39,27 +39,28 @@ static int by_letter(int ch)
     return -1;
 }
 
-static int shown(int y, int x)
+/* Neighbours come from the real map (stdscr), so a monster or the player
+   standing next to a wall does not change its shape. */
+static int real(int y, int x)
 {
-    return (y < 1 || y >= LINES - 2 || x < 0 || x >= COLS) ? ' ' : cw->c[y * cw->maxx + x] & A_CHARTEXT;
+    return (y < 1 || y >= LINES - 2 || x < 0 || x >= COLS) ? ' ' : stdscr->c[y * stdscr->maxx + x] & A_CHARTEXT;
 }
+
+#define HWALLISH(c) ((c) == HORZWALL || (c) == DOOR || (c) == SECRETDOOR)
+#define VWALLISH(c) ((c) == VERTWALL || (c) == DOOR || (c) == SECRETDOOR)
 
 static int terrain(int y, int x, int ch)
 {
-    int up, dn, l, r;
     switch (ch) {
     case HORZWALL:
-        up = shown(y - 1, x); dn = shown(y + 1, x);
-        l = shown(y, x - 1); r = shown(y, x + 1);
-        if (dn == VERTWALL || dn == DOOR || dn == SECRETDOOR)
-            return r == HORZWALL ? T_TL : l == HORZWALL ? T_TR : T_HWALL;
-        if (up == VERTWALL || up == DOOR || up == SECRETDOOR)
-            return r == HORZWALL ? T_BL : l == HORZWALL ? T_BR : T_HWALL;
+        if (HWALLISH(real(y, x - 1)) && HWALLISH(real(y, x + 1))) return T_HWALL;
+        if (VWALLISH(real(y + 1, x)))
+            return HWALLISH(real(y, x + 1)) ? T_TL : T_TR;
+        if (VWALLISH(real(y - 1, x)))
+            return HWALLISH(real(y, x + 1)) ? T_BL : T_BR;
         return T_HWALL;
     case VERTWALL: return T_VWALL;
-    case DOOR:
-        l = shown(y, x - 1); r = shown(y, x + 1);
-        return (l == HORZWALL || r == HORZWALL) ? T_HDOOR : T_VDOOR;
+    case DOOR: return T_FLOOR;   /* Rogue doors are just gaps in the wall */
     }
     return ch < 128 ? terrain_tile[ch] : -1;
 }
@@ -69,7 +70,7 @@ static int floor_under(int y, int x)
 {
     int c = stdscr->c[y * stdscr->maxx + x] & A_CHARTEXT;
     if (c == PASSAGE) return T_CORR;
-    if (c == DOOR) return terrain(y, x, DOOR);
+    if (c == DOOR) return T_FLOOR;
     if (c < 128 && terrain_tile[c] >= 0 && c != SECRETDOOR) return terrain_tile[c];
     return levtype == MAZELEV || c == ' ' ? T_CORR : T_FLOOR;
 }

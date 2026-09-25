@@ -484,7 +484,18 @@
 	}
 	tiles.onload = function () { tilesFinished(true); };
 	tiles.onerror = function () { tilesFinished(false); };
-	tiles.src = 'tiles.png';
+	/* tile sets: same slot layout (port/mkdawn.py); the choice is a per-browser preference */
+	var TILESETS = [['tiles.png', 'NetHack'], ['tiles-dawn.png', 'DawnLike']], tileset = 0;
+	try { tileset = +localStorage.getItem('tileset') % TILESETS.length || 0; } catch (err) { /* no storage */ }
+	function renderTileset() { var b = $('btn-tiles'); if (b) b.textContent = 'Tiles: ' + TILESETS[tileset][1]; }
+	function toggleTileset() {
+		tileset = (tileset + 1) % TILESETS.length;
+		try { localStorage.setItem('tileset', tileset); } catch (err) { /* no storage */ }
+		renderTileset();
+		tiles.onload = function () { tilesReady = true; if (panes[P_MAP]) { shape(P_MAP); applyDom(); } };
+		tiles.src = TILESETS[tileset][0];
+	}
+	tiles.src = TILESETS[tileset][0];
 
 	function crashed(err) {
 		if (!running) return;
@@ -519,6 +530,8 @@
 		$('btn-zoom-in').onclick = function () { zoomMap(1); };
 		$('btn-zoom-out').onclick = function () { zoomMap(-1); };
 		$('btn-layout').onclick = resetLayout;
+		$('btn-tiles').onclick = toggleTileset;
+		renderTileset();
 		$('btn-sound').onclick = function () { toggleAudio('sound'); };
 		$('btn-music').onclick = function () { toggleAudio('music'); };
 		$('btn-restart').onclick = function () { location.reload(); };
