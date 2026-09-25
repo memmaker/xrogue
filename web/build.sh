@@ -18,7 +18,7 @@ emcc -O2 -fcommon -std=gnu89 -w -Wno-error=return-mismatch -Wno-error=implicit-f
 	-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,ENV,HEAPU8,addRunDependency,removeRunDependency \
 	-sEMULATE_FUNCTION_POINTER_CASTS \
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
-cp web/index.html web/xrogue.js port/tiles.png port/tiles-dawn.png "$OUT/"
+cp web/index.html web/rvip-wm.js web/xrogue.js port/tiles.png port/tiles-dawn.png "$OUT/"
 # sound effects (message text -> Dubtrain samples) and the town music
 mkdir -p "$OUT/sound" "$OUT/music"
 python3 web/sounds.py "$OUT/sound"
