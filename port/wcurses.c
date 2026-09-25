@@ -312,13 +312,24 @@ static void map_refresh(WINDOW *w)
     else be_cursor(-1, 0, 0);
 }
 
+/* a repeat of the newest history line becomes "line (xN)" in its row */
 static void hist(const char *s)
 {
+    static char prev[512];
+    static int reps;
+    char buf[560];
     WINDOW *p = pn[P_MSG];
-    int y, x, n = strlen(s);
-    for (y = 0; y < HIST - 1; y++)
-        for (x = 0; x < p->maxx; x++) pset(p, y, x, p->c[(y + 1) * p->maxx + x]);
-    for (x = 0; x < p->maxx; x++) pset(p, HIST - 1, x, x < n ? (unsigned char)s[x] : ' ');
+    int y, x, n;
+    if (*prev && !strcmp(s, prev)) snprintf(buf, sizeof buf, "%s (x%d)", s, ++reps);
+    else {
+        reps = 1;
+        snprintf(prev, sizeof prev, "%s", s);
+        snprintf(buf, sizeof buf, "%s", s);
+        for (y = 0; y < HIST - 1; y++)
+            for (x = 0; x < p->maxx; x++) pset(p, y, x, p->c[(y + 1) * p->maxx + x]);
+    }
+    n = strlen(buf);
+    for (x = 0; x < p->maxx; x++) pset(p, HIST - 1, x, x < n ? (unsigned char)buf[x] : ' ');
 }
 
 static void msg_refresh(WINDOW *w)

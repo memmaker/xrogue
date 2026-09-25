@@ -27,6 +27,12 @@ void be_sound(const char *s) { if (*s) js_sound(s); }
 
 /* Visible window (RVIP 5b): monsters and objects drawn on the player's
  * view right now (invisible monsters and mimics fail the screen check) */
+EM_JS(void, js_invfg, (int y, const char *c), { Module.xr.invfg(y, UTF8ToString(c)); });
+void be_invfg(int y, const char *css)
+{
+    static const char *last[64];
+    if (y < 64 && last[y] != css) { last[y] = css; js_invfg(y, css); }
+}
 EM_JS(void, js_vis, (const char *s), { if (Module.xr.vis) Module.xr.vis(UTF8ToString(s)); });
 static void send_visible(void)
 {
@@ -42,7 +48,7 @@ static void send_visible(void)
     for (l = lvl_obj; l != NULL && n < 3900; l = next(l)) {
         struct object *o = OBJPTR(l);
         if ((mvwinch(cw, o->o_pos.y, o->o_pos.x) & 0xff) == (o->o_type & 0xff))
-            n += snprintf(buf + n, sizeof buf - n, "I%c\n", o->o_type);
+            n += snprintf(buf + n, sizeof buf - n, "I%c%s\t%s\n", o->o_type, wc_kind(o->o_type)->name, wc_kind(o->o_type)->css);
     }
     wmove(cw, cy, cx);
     buf[n] = 0;

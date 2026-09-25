@@ -132,6 +132,33 @@ int wc_is_thing(int y, int x)
     return 0;
 }
 
+/* Item kinds: name and Angband colour (RVIP W0: colours come from the game) */
+static const struct wc_kind K[] = {
+    { POTION, "potion", "#40a0ff" }, { SCROLL, "scroll", "#ffffff" },
+    { RING, "ring", "#ff4040" },     { STICK, "wand", "#40d040" },
+    { FOOD, "food", "#d09050" },     { ARMOR, "armor", "#a07040" },
+    { WEAPON, "weapon", "#b0b0b8" }, { GOLD, "gold", "#ffe040" },
+#ifdef AMULET
+    { AMULET, "amulet", "#ff9000" },
+#endif
+#ifdef MM
+    { MM, "magic item", "#c0c0c0" },
+#endif
+#ifdef RELIC
+    { RELIC, "relic", "#ff9000" },
+#endif
+#ifdef ARTIFACT
+    { ARTIFACT, "artifact", "#ff9000" },
+#endif
+    { 0, "something", "" }
+};
+const struct wc_kind *wc_kind(int type)
+{
+    const struct wc_kind *k = K;
+    while (k->type && k->type != type) k++;
+    return k;
+}
+
 /* Inventory pane: the pack, lettered like inventory(), plus gold.
  * inv_name() writes the game's shared prbuf, so keep it intact. */
 void wc_inv(WINDOW *p)
@@ -144,8 +171,9 @@ void wc_inv(WINDOW *p)
     for (l = pack; l && y < p->maxy - 1; l = next(l), y++, ch = ch == 'z' ? 'A' : ch + 1) {
         mvwprintw(p, y, 0, "%c) %s", ch, inv_name(OBJPTR(l), FALSE));
         wclrtoeol(p);
+        be_invfg(y, wc_kind((OBJPTR(l))->o_type)->css);
     }
-    for (; y < p->maxy - 1; y++) { wmove(p, y, 0); wclrtoeol(p); }
+    for (; y < p->maxy; y++) { be_invfg(y, ""); if (y < p->maxy - 1) { wmove(p, y, 0); wclrtoeol(p); } }
     mvwprintw(p, y, 0, "%d/%d items, %ld gold", inpack, MAXPACK, purse);
     wclrtoeol(p);
     memcpy(prbuf, save, sizeof save);
