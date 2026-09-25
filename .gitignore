@@ -5,3 +5,4 @@ web/dist/
 /xrogue-x11
 *.dSYM/
 *.o
+save/
