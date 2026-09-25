@@ -85,4 +85,10 @@ parts.append(section('guide', "New player's guide",
                      ''.join(f'<h3>{esc(t)}</h3>{b}' for t, b in guide.items())))
 parts.append(section('web', 'Playing in the browser', WEB))
 
+# RVIP: About this version (rogue2wasm.md: Source and changes)
+parts.append('<h2 id="h-version">About this version</h2><ul>'
+             '<li>Based on <strong>XRogue 8.0.3</strong>.</li>'
+             '<li>Original source: <a href="https://github.com/memmaker/xrogue/tree/544e05a" target="_blank" rel="noopener">memmaker/xrogue master, commit 544e05a (dump of the original svn r1490)</a></li>'
+             '<li>Our changes (port, auto-explore, command menu, web build): '
+             '<a href="https://github.com/memmaker/xrogue/compare/master...rvip-port" target="_blank" rel="noopener">memmaker/xrogue, branch rvip-port</a></li></ul>')
 print('\n'.join(parts))

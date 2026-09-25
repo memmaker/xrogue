@@ -192,3 +192,9 @@ ASan binary and objects removed.
 - Scratch test helper used in session 2 (not in the repo): start with
   isolated HOME, `buy` = walk along the hero's row to the nearest shop item
   and `#` `y`.
+
+## Source and changes
+
+- Base: **XRogue 8.0.3**
+- Original source: https://github.com/memmaker/xrogue/tree/544e05a (memmaker/xrogue master, commit 544e05a (dump of the original svn r1490))
+- Our changes: https://github.com/memmaker/xrogue/compare/master...rvip-port (memmaker/xrogue, branch rvip-port)
