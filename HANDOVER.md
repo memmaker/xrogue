@@ -7,7 +7,7 @@ here and committed as the first git commit ("xrogue 8.0.3 upstream"), so
 
 XRogue is a **curses** game (Rogue → Advanced Rogue → XRogue), not an
 Angband variant: no z-term, no subwindows, no pref files. RVIP steps were
-adapted accordingly (see "Rogue variants" in `~/Games/RVIP.md`).
+adapted accordingly (see "Rogue variants" in `~/Games/rvip-tools/RVIP.md`).
 
 ## Build / run
 
