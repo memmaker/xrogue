@@ -24,6 +24,7 @@
 /* sound events (port/curses.h); silent in the plain ncurses build */
 #ifndef XR_SHIM
 #define be_sound(event) ((void) 0)
+#define be_run_end(ev, killer, score) ((void) 0)
 #endif
 #include <stdlib.h>
 #include <string.h>

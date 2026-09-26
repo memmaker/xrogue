@@ -439,6 +439,10 @@
 			Module.ENV.HOME = DIR;               /* xrogue.sav (md_gethomedir) */
 			Module.ENV.ROGUEHOME = DIR;          /* score file */
 			Module.ENV.USER = 'rogue';
+			var who = '';                        /* whoami: getpwuid() is web_user, so ask once */
+			try { who = localStorage.getItem('xrogue-name') || ''; } catch (err) { /* no storage */ }
+			if (!who) { who = (prompt('What is your name, adventurer?', '') || '').replace(/[,\n]/g, '').trim().slice(0, 30); try { if (who) localStorage.setItem('xrogue-name', who); } catch (err) { /* no storage */ } }
+			if (who) Module.ENV.ROGUEOPTS = 'name=' + who;
 			Module.addRunDependency('idbfs');
 			FS.syncfs(true, function (err) {
 				if (err) status('Could not read saved games from IndexedDB (' + err + '). Saving may not work in this browser mode.', true);

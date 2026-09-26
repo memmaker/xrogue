@@ -702,6 +702,7 @@ int sig;
         wmove(hw, 12, 30);
         wprintw(hw, "Good-bye!");
         draw(hw);
+        be_run_end("quit", NULL, -1);   /* left town: the game keeps no score */
         exit_game(EXIT_ENDWIN);
     }
     msg("Really quit? <yes or no> ");   /* otherwise ask about quitting */
@@ -711,6 +712,7 @@ int sig;
         clear();
         move(lines-1, 0);
         draw(stdscr);
+        be_run_end("quit", NULL, pstats.s_exp + (long) purse);
         score(pstats.s_exp + (long) purse, CHICKEN, 0);
         exit_game(EXIT_ENDWIN);
     }
