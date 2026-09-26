@@ -198,3 +198,8 @@ ASan binary and objects removed.
 - Base: **XRogue 8.0.3**
 - Original source: https://github.com/memmaker/xrogue/tree/544e05a (memmaker/xrogue master, commit 544e05a (dump of the original svn r1490))
 - Our changes: https://github.com/memmaker/xrogue/compare/master...rvip-port (memmaker/xrogue, branch rvip-port)
+- Prompt line (RVIP step 5 / W4, 2026-09-26): the live message row is shown in a
+  box over the map by `RvipWM.prompt` (rvip-wm.js). A key hides it only while
+  the game waits for a command, so a question stays up until answered.
+  Here: `be_prompt(r)` from `msg_refresh()` in `port/wcurses.c` (row 0 text),
+  `js_key(wc_cmd_prompt)` in `port/be_web.c`; `be_x11.c` has an empty stub.
