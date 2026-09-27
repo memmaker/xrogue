@@ -136,7 +136,7 @@ void be_cursor(int pane, int y, int x);
 void be_prompt(const char *s);           /* live message row (rvip-wm.js prompt line) */   /* pane -1: no cursor */
 void be_popup(int rows, int cols);        /* 0: close */
 void be_flush(void);
-int  be_getkey(int wait);   /* -1 when !wait and nothing queued */
+int  be_getkey(int wait);   /* -1 when nothing queued: wait 0 polls (web: 40 ms pause), -1 drains */
 void be_end(void);
 int  tile_for(int y, int x, int ch, int *under);  /* tiles.c: -1 = text */
 struct wc_kind { int type; const char *name, *css; };

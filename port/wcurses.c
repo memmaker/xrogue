@@ -448,7 +448,7 @@ int wc_kbhit(void)
     return pushback >= 0;
 }
 
-int flushinp(void) { pushback = -1; while (be_getkey(0) >= 0) ; return OK; }
+int flushinp(void) { pushback = -1; while (be_getkey(-1) >= 0) ; return OK; }
 
 const char *unctrl(chtype c)
 {

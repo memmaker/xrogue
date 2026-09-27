@@ -713,15 +713,19 @@ cmd_menu()
     int g, n, i, grp;
 
     for (;;) {
-        char *gi[5], gk[5], gt[5][40];
-        for (g = 0; g < 5; g++) {
-            sprintf(gt[g], "%c) %s", 'a' + g, cmd_groups[g]);
+        /* the "Move and run" group (1) is left out: moves are keys, not menu items */
+        static int shown[] = { 0, 2, 3, 4 };
+        char *gi[4], gk[4], gt[4][40];
+        for (g = 0; g < 4; g++) {
+            sprintf(gt[g], "%c) %s", 'a' + g, cmd_groups[shown[g]]);
             gi[g] = gt[g]; gk[g] = 'a' + g;
         }
-        if ((g = menu("Commands", gi, gk, 5)) < 0) break;
+        if ((g = menu("Commands", gi, gk, 4)) < 0) break;
+        g = shown[g];
         for (grp = 0, n = 0, h = helpstr; h->h_ch && n < 80; h++) {
             if (h->h_ch == ' ') { grp++; continue; }
             if (grp != g || h->h_ch == '\r' || h->h_ch == ESC) continue;
+            if (strchr("hjklyubnHJKLYUBN", h->h_ch)) continue;  /* moves and runs */
             {
                 char *d = h->h_desc, k[12];
                 strcpy(k, unctrl(h->h_ch));

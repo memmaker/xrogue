@@ -277,7 +277,7 @@ int be_getkey(int wait)
 {
     XEvent ev;
     for (;;) {
-        if (!wait && !XPending(dpy)) return -1;
+        if (wait <= 0 && !XPending(dpy)) return -1;
         XNextEvent(dpy, &ev);
         if (ev.type == Expose) be_flush();
         else if (ev.type == KeyPress) {

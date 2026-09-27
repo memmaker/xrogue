@@ -132,7 +132,7 @@ explore_step()
     if ((mode == '<' || mode == '>') &&
         (mvwinch(stdscr, hero.y, hero.x) & A_CHARTEXT) == STAIRS) {
         explore_mode = 0;
-        return mode;                /* take them */
+        return 0;                   /* arrived; the player takes them */
     }
 
     memset(from, -1, sizeof from);
