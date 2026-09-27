@@ -28,6 +28,7 @@ typedef struct _win {
     int clear;          /* clearok */
     short *first, *last;/* changed range per line, -1 = none */
     chtype *c;
+    const char **fg;    /* row colour (css) set by the game, NULL = default */
 } WINDOW;
 
 extern WINDOW *stdscr, *curscr;
@@ -141,6 +142,8 @@ int  tile_for(int y, int x, int ch, int *under);  /* tiles.c: -1 = text */
 struct wc_kind { int type; const char *name, *css; };
 const struct wc_kind *wc_kind(int type);         /* tiles.c */
 void be_invfg(int y, const char *css, int tile);  /* inventory row colour and icon */
+void be_rowfg(int p, int y, const char *css);     /* pop-up row colour */
+int  wc_rowfg(WINDOW *w, int y, const char *css); /* per-row colour, cleared by werase */
 int  be_icons(void);                      /* a tile set is shown: inventory rows get icons */
 void wc_inv(WINDOW *);                            /* tiles.c */
 struct object; struct thing;

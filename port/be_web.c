@@ -55,6 +55,8 @@ void be_invfg(int y, const char *css, int t)
     static int lastt[64];
     if (y < 64 && (last[y] != css || lastt[y] != t)) { last[y] = css; lastt[y] = t; js_invfg(y, css, t); }
 }
+EM_JS(void, js_rowfg, (int p, int y, const char *c), { Module.xr.rowfg(p, y, UTF8ToString(c)); });
+void be_rowfg(int p, int y, const char *css) { js_rowfg(p, y, css); }
 EM_JS(int, be_icons, (void), { return Module.xr.icons(); });
 EM_JS(void, js_vis, (const char *s), { if (Module.xr.vis) Module.xr.vis(UTF8ToString(s)); });
 static void send_visible(void)

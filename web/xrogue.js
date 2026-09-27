@@ -327,6 +327,12 @@
 			(T.rowIcon = T.rowIcon || [])[y] = t;
 			for (var x = 0; x < T.cols; x++) draw(P_INV, y, x);
 		},
+		rowfg: function (p, y, c) {   /* the game's colour for a pop-up row */
+			var T = panes[p];
+			if (!T || y >= T.rows) return;
+			(T.rowFg = T.rowFg || [])[y] = c;
+			for (var x = 0; x < T.cols; x++) draw(p, y, x);
+		},
 		icons: function () { return tilesReady ? 1 : 0; },
 		vis: function (s) { RvipWM.visible(document.querySelector('#t-vis .body'), s, visIcon); },
 		key: function (atCmd) { RvipWM.prompt.wait(atCmd); xr.atCmd = atCmd; return events.length ? events.shift() : -1; },
