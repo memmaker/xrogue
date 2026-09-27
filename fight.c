@@ -777,7 +777,7 @@ bool back_stab, thrown, short_msg;
 
     /* If we can't see either the attacker or defender, don't say anything */
     if (!see_att && !see_def) return;
-    be_sound(er == NULL ? "hit" : ee == NULL ? "mon_hit" : "");
+    be_sound(er == NULL ? (thrown ? "shoot_hit" : "hit") : ee == NULL ? "mon_hit" : "");
 
     /* What do we call the attacker? */
     strcpy(att_name, see_att ? prname(er, TRUE) : "Something");
@@ -842,7 +842,7 @@ bool thrown, short_msg;
 
     /* If we can't see either the attacker or defender, don't say anything */
     if (!see_att && !see_def) return;
-    if (er == NULL) be_sound("miss");
+    if (er == NULL) be_sound(thrown ? "shoot_miss" : "miss");
 
     /* What do we call the attacker? */
     strcpy(att_name, see_att ? prname(er, TRUE) : "Something");
