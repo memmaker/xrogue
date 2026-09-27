@@ -25,3 +25,5 @@ python3 web/sounds.py "$OUT/sound"
 cp ~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg "$OUT/music/"
 python3 web/make-help.py > "$OUT/help.html"
 ls -la "$OUT"
+# text fonts: the index page's fonts/ (served at ../fonts/ next to the games)
+(cd ~/Games/roguelikes-index/fonts && ls *.woff | sed 's/\.woff$//') | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().split()))' > "$OUT/fonts.json"
