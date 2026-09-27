@@ -316,6 +316,8 @@
 			/* the cursor is drawn over the cell; redraw that cell next time */
 			if (xr.lastCur && panes[xr.lastCur.p]) draw(xr.lastCur.p, xr.lastCur.y, xr.lastCur.x);
 			drawCursor();
+			var mb = panes[P_MSG] && panes[P_MSG].cv.parentNode;   /* follow the newest message */
+			if (mb) mb.scrollTop = mb.scrollHeight;
 			xr.lastCur = cur.p >= 0 ? { p: cur.p, y: cur.y, x: cur.x } : null;
 			audio.level = level;
 			if (!!town !== audio.town) { audio.town = !!town; updateMusic(); }

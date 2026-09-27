@@ -316,6 +316,8 @@ static void map_refresh(WINDOW *w)
     else be_cursor(-1, 0, 0);
 }
 
+static int nhist;            /* history rows in use; the live message goes below them */
+
 /* a repeat of the newest history line becomes "line (xN)" in its row */
 static void hist(const char *s)
 {
@@ -329,11 +331,16 @@ static void hist(const char *s)
         reps = 1;
         snprintf(prev, sizeof prev, "%s", s);
         snprintf(buf, sizeof buf, "%s", s);
-        for (y = 0; y < HIST - 1; y++)
-            for (x = 0; x < p->maxx; x++) pset(p, y, x, p->c[(y + 1) * p->maxx + x]);
+        if (nhist < HIST)           /* not full yet: push the live rows down */
+            for (y = nhist + 3; y >= nhist; y--)
+                for (x = 0; x < p->maxx; x++) pset(p, y + 1, x, p->c[y * p->maxx + x]);
+        else
+            for (y = 0; y < HIST - 1; y++)
+                for (x = 0; x < p->maxx; x++) pset(p, y, x, p->c[(y + 1) * p->maxx + x]);
+        if (nhist < HIST) nhist++;
     }
     n = strlen(buf);
-    for (x = 0; x < p->maxx; x++) pset(p, HIST - 1, x, x < n ? (unsigned char)buf[x] : ' ');
+    for (x = 0; x < p->maxx; x++) pset(p, nhist - 1, x, x < n ? (unsigned char)buf[x] : ' ');
 }
 
 static void msg_refresh(WINDOW *w)
@@ -353,10 +360,10 @@ static void msg_refresh(WINDOW *w)
             chtype ch = w->c[y * w->maxx + x];
             int sy = y + w->begy, sx = x + w->begx;
             if (y && wc_mapwin && ch == wc_mapwin->c[sy * COLS + sx]) ch = ' ';
-            pset(pn[P_MSG], HIST + y, x, ch);
+            pset(pn[P_MSG], nhist + y, x, ch);
         }
     untouch(w);
-    be_cursor(P_MSG, HIST + w->cury, w->curx);
+    be_cursor(P_MSG, nhist + w->cury, w->curx);
 }
 
 static void pop_refresh(WINDOW *w)
