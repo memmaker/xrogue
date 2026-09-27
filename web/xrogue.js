@@ -86,6 +86,14 @@
 			c.drawImage(tiles, (t % 32) * 16, ((t / 32) | 0) * 16, 16, 16, px, py, T.cw, T.ch);
 			return;
 		}
+		var ic = p === P_INV && T.rowIcon ? T.rowIcon[y] : -1;
+		if (ic >= 0 && tilesReady && x >= 2 && x <= 4) {   /* square, whatever the font's cell shape; centred in cols 2-4 */
+			var s = Math.min(2 * T.cw, T.ch), ix = T.pad + 2 * T.cw + (3 * T.cw - s) / 2;
+			c.save(); c.beginPath(); c.rect(px, py, T.cw, T.ch); c.clip();
+			c.drawImage(tiles, (ic % 32) * 16, ((ic / 32) | 0) * 16, 16, 16, ix, py + (T.ch - s) / 2, s, s);
+			c.restore();
+			return;
+		}
 		var k = ch & 0xff;
 		if (k > 32) {
 			c.font = T.font;
@@ -312,14 +320,16 @@
 			audio.level = level;
 			if (!!town !== audio.town) { audio.town = !!town; updateMusic(); }
 		},
-		invfg: function (y, c) {   /* the game's colour for an inventory row */
+		invfg: function (y, c, t) {   /* the game's colour and icon tile for an inventory row */
 			var T = panes[P_INV];
 			if (!T || y >= T.rows) return;
 			(T.rowFg = T.rowFg || [])[y] = c;
+			(T.rowIcon = T.rowIcon || [])[y] = t;
 			for (var x = 0; x < T.cols; x++) draw(P_INV, y, x);
 		},
-		vis: function (s) { RvipWM.visible(document.querySelector('#t-vis .body'), s); },
-		key: function (atCmd) { RvipWM.prompt.wait(atCmd); return events.length ? events.shift() : -1; },
+		icons: function () { return tilesReady ? 1 : 0; },
+		vis: function (s) { RvipWM.visible(document.querySelector('#t-vis .body'), s, visIcon); },
+		key: function (atCmd) { RvipWM.prompt.wait(atCmd); xr.atCmd = atCmd; return events.length ? events.shift() : -1; },
 		prompt: function (s) { RvipWM.prompt.text(s); },
 		requestSave: function () { saveReq = true; },   /* also for testing */
 		wantSave: function () {
@@ -466,17 +476,34 @@
 	tiles.onload = function () { tilesFinished(true); };
 	tiles.onerror = function () { tilesFinished(false); };
 	/* tile sets: same slot layout (port/mkdawn.py); the choice is a per-browser preference */
-	var TILESETS = [['tiles.png', 'NetHack'], ['tiles-dawn.png', 'DawnLike']], tileset = 0;
+	var TILESETS = [['tiles.png', 'NetHack'], ['tiles-dawn.png', 'DawnLike'], [null, 'None']], tileset = 0;
 	try { tileset = +localStorage.getItem('tileset') % TILESETS.length || 0; } catch (err) { /* no storage */ }
 	function renderTileset() { var b = $('btn-tiles'); if (b) b.textContent = 'Tiles: ' + TILESETS[tileset][1]; }
 	function toggleTileset() {
 		tileset = (tileset + 1) % TILESETS.length;
 		try { localStorage.setItem('tileset', tileset); } catch (err) { /* no storage */ }
 		renderTileset();
-		tiles.onload = function () { tilesReady = true; if (panes[P_MAP]) { shape(P_MAP); applyDom(); } };
+		var redraw = function () {
+			[P_MAP, P_INV].forEach(function (p) { if (panes[p]) shape(p); });
+			var vb = document.querySelector('#t-vis .body');
+			if (vb && vb._vis != null) { var s = vb._vis; vb._vis = null; xr.vis(s); }
+			if (xr.atCmd) events.push(12);   /* ^L: the game redraws, the Inventory gets or drops its icons */
+			applyDom();
+		};
+		if (!TILESETS[tileset][0]) { tilesReady = false; redraw(); return; }   /* text mode */
+		/* a sheet that finishes late must not turn tiles back on after None */
+		tiles.onload = function () { if (TILESETS[tileset][0]) { tilesReady = true; redraw(); } };
 		tiles.src = TILESETS[tileset][0];
 	}
-	tiles.src = TILESETS[tileset][0];
+	/* Visible window icon: the tile as a CSS sprite */
+	function visIcon(t) {
+		if (!tilesReady || !(t >= 0)) return null;
+		var s = document.createElement('i');
+		s.className = 'wm-ic';
+		s.style.cssText = 'image-rendering:pixelated;background:url(' + tiles.src + ') -' + (t % 32) * 16 + 'px -' + ((t / 32) | 0) * 16 + 'px';
+		return s;
+	}
+	if (TILESETS[tileset][0]) tiles.src = TILESETS[tileset][0]; else tilesDone = true;
 
 	function crashed(err) {
 		if (!running) return;
