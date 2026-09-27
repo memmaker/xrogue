@@ -221,6 +221,11 @@ for k, v in (('HWALL', 'main walls horizontal'), ('VWALL', 'main walls vertical'
              ('HDOOR', 'horizontal open door'), ('VDOOR', 'vertical open door'),
              ('FLOOR', 'floor of a room'), ('CORR', 'corridor')):
     out.append('#define T_%s %d\n' % (k, T('T:' + v)))
+# 16 floor and 16 corridor slots by border mask (RVIP-Finetuning: DawnLike
+# autotiles); NetHack has one look each, so the slots repeat it
+for k, v in (('FLOORS', 'floor of a room'), ('CORRS', 'corridor')):
+    out.append('#define T_%s %d\n' % (k, len(tiles)))
+    tiles += [tiles[T('T:' + v)]] * 16; names += [names[T('T:' + v)]] * 16
 img = Image.new('RGBA', (PER_ROW * 16, (len(tiles) + PER_ROW - 1) // PER_ROW * 16))
 for t, rows in enumerate(tiles):
     for y, r in enumerate(rows):

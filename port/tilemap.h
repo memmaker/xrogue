@@ -27,3 +27,5 @@ static const short generic_tile[128] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-
 #define T_VDOOR 891
 #define T_FLOOR 897
 #define T_CORR 900
+#define T_FLOORS 1153
+#define T_CORRS 1169
