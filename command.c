@@ -368,14 +368,14 @@ command()
             /* when '\\' : after = FALSE; ident_hero(); */
             when '\\' : msg("Charon (the Boatman) looks at you... ");
 
-                    when '/' : after = FALSE; identify(NULL);
+                    when '/' : after = FALSE; identify(0);
                     when C_COUNT : count_gold();
                     when C_DIP : dip_it();
                     when C_DROP : player.t_action = C_DROP; 
                                   drop((struct linked_list *)NULL);
                     when C_EAT : eat();
-                    when C_QUAFF : quaff(-1, NULL, NULL, TRUE);
-                    when C_READ : read_scroll(-1, NULL, TRUE);
+                    when C_QUAFF : quaff(-1, 0, 0, TRUE);
+                    when C_READ : read_scroll(-1, 0, TRUE);
                     when C_SETTRAP : set_trap(&player, hero.y, hero.x);
                     when C_SEARCH :
                         if (player.t_action == A_NIL) {

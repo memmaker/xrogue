@@ -209,7 +209,7 @@ pray()
 
     if (cleric_spells[which_prayer].s_type == TYP_POTION)
         quaff(          cleric_spells[which_prayer].s_which,
-                        NULL,
+                        0,
                         cleric_spells[which_prayer].s_flag,
                         FALSE);
     else if (cleric_spells[which_prayer].s_type == TYP_SCROLL)
@@ -290,7 +290,7 @@ cast()
 
     if (magic_spells[which_spell].s_type == TYP_POTION)
         quaff(  magic_spells[which_spell].s_which,
-                NULL,
+                0,
                 magic_spells[which_spell].s_flag,
                 FALSE);
     else if (magic_spells[which_spell].s_type == TYP_SCROLL)
@@ -376,7 +376,7 @@ chant()
 
     if (druid_spells[which_chant].s_type == TYP_POTION)
         quaff(          druid_spells[which_chant].s_which,
-                        NULL,
+                        0,
                         druid_spells[which_chant].s_flag,
                         FALSE);
     else if (druid_spells[which_chant].s_type == TYP_SCROLL)
@@ -687,7 +687,7 @@ gsense()
     if (player.t_ctype == C_THIEF     || player.t_ctype == C_ASSASSIN ||
         ((player.t_ctype == C_FIGHTER || player.t_ctype == C_RANGER)  &&
     pstats.s_lvl >= 12)) {
-          read_scroll(S_GFIND, NULL, FALSE);
+          read_scroll(S_GFIND, 0, FALSE);
     }
     else msg("You seem to have no gold sense.");
     return;
@@ -703,7 +703,7 @@ xsense()
     if (player.t_ctype == C_THIEF   || ((player.t_ctype == C_ASSASSIN ||
     player.t_ctype == C_FIGHTER || player.t_ctype == C_MONK)      &&
     pstats.s_lvl >= 14)) {
-        read_scroll(S_FINDTRAPS, NULL, FALSE);
+        read_scroll(S_FINDTRAPS, 0, FALSE);
     }
     else msg("You seem not to be able to sense traps.");
     return;
@@ -1000,7 +1000,7 @@ const char      *type;          /* type of thing--> spell, prayer, chant */
 
         /* Should we overlay? */
         if (menu_overlay && num_spells + 3 < lines - 3) {
-            over_win(cw, hw, num_spells + 5, maxlen + 3, 0, curlen, NULL);
+            over_win(cw, hw, num_spells + 5, maxlen + 3, 0, curlen, 0);
         }
         else draw(hw);
     }
@@ -1028,7 +1028,7 @@ const char      *type;          /* type of thing--> spell, prayer, chant */
             /* Should we overlay? */
             if (menu_overlay && num_spells + 3 < lines - 3) {
                 over_win(cw, hw, num_spells + 5, maxlen + 3,
-                            0, curlen, NULL);
+                            0, curlen, 0);
             }
             else draw(hw);
 
@@ -1445,7 +1445,7 @@ opt_player()
             if (menu_overlay) {     /* Print the list. */
                 wmove(hw, i+2, 0);
                 wprintw(hw, spacemsg);
-                over_win(cw, hw, i+3, j, i+2, 27, NULL);
+                over_win(cw, hw, i+3, j, i+2, 27, 0);
         }
             else {
                 wmove(hw, i+2, 0);
@@ -1460,7 +1460,7 @@ opt_player()
                 wprintw(hw, spacemsg);
         if (j > 2) j = 78;
         else j = 39;
-                over_win(cw, hw, i+3, j, i+2, 27, NULL);
+                over_win(cw, hw, i+3, j, i+2, 27, 0);
         }
             else {
                 wmove(hw, i+2, 0);

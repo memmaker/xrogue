@@ -106,7 +106,7 @@ do_rooms()
 
             has_gold = TRUE;    /* This room has gold in it */
 
-            item = spec_item(GOLD, NULL, NULL, NULL);
+            item = spec_item(GOLD, 0, 0, 0);
             cur = OBJPTR(item);
 
             /* Put the gold into the level list of items */

@@ -1645,7 +1645,7 @@ register int y, x;
                              * Put out the selection.  The longest line is
                              * the prompt line (39 characters long).
                              */
-                            over_win(cw, hw, num_traps + 3, 41, 0, 39, NULL);
+                            over_win(cw, hw, num_traps + 3, 41, 0, 39, 0);
                         else
                             draw(hw);
                         state = 1;      /* Now in prompt window */
@@ -1705,7 +1705,7 @@ register int y, x;
                                  * Put out the selection.  The longest line is
                                  * the prompt line (43 characters long).
                                  */
-                                over_win(cw, hw, num_traps+3, 45, 0, 43, NULL);
+                                over_win(cw, hw, num_traps+3, 45, 0, 43, 0);
                             else 
                                 draw(hw);
                         }

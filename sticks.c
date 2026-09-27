@@ -513,7 +513,7 @@ int flags;
             pstats.s_hpt = -1;
                     msg("Your life has been sucked out from you!  --More--");
                     wait_for(' ');
-                    death(zapper);
+                    death(zapper->t_index);
                 }
                 else
                     msg("You feel a great drain on your system.");
@@ -868,7 +868,7 @@ int flag;
             switch (obj->o_which) {
                 case ORCUS_WAND:
             /* msg(nothing); */
-            read_scroll(S_PETRIFY, NULL, FALSE);
+            read_scroll(S_PETRIFY, 0, FALSE);
             return(TRUE);
                 when MING_STAFF:
                     which = WS_MISSILE;

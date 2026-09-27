@@ -718,7 +718,7 @@ choose_qst()
         if (menu_overlay)  /* Print the selections.  The longest line is
                 * Hruggek (26 characters).  The prompt is 21.
                 */
-            over_win(cw, hw, 20, 29, 0, 21, NULL);
+            over_win(cw, hw, 20, 29, 0, 21, 0);
         else
             draw(hw);
 

@@ -71,7 +71,7 @@ int sig;
  */
 
 death(monst)
-register short monst;
+register int monst;
 {
     register char **dp = rip, *killer;
     register struct tm *lt;

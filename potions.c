@@ -283,7 +283,7 @@ quaff(which, kind, flags, is_potion)
 int which;
 int kind;
 int flags;
-bool is_potion;
+int is_potion;
 {
     register struct object *obj;
     register struct linked_list *item, *titem;

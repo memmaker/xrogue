@@ -411,7 +411,7 @@ register char ch;
 over_win(oldwin, newin, maxy, maxx, cursory, cursorx, redraw)
 WINDOW *oldwin, *newin;
 int maxy, maxx, cursory, cursorx;
-char redraw;
+int redraw;
 {
     char blanks[LINELEN+1];
     register int line, i;

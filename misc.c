@@ -346,8 +346,8 @@ register struct linked_list *item;
                     obj->o_ac--;
                     detach(obj->contents, titem);
                     quaff(tobj->o_which, 
-                          tobj->o_kind,
-                          tobj->o_flags,
+                          (int)tobj->o_kind,
+                          (int)tobj->o_flags,
                           TRUE);
                     if (p_know[tobj->o_which] && p_guess[tobj->o_which])
                     {
@@ -759,7 +759,7 @@ struct object *obj;
 
         /* Should we overlay? */
         if (menu_overlay && MAXQUILL + 3 < lines - 3) {
-            over_win(cw, hw, MAXQUILL + 5, maxlen + 3, 0, curlen, NULL);
+            over_win(cw, hw, MAXQUILL + 5, maxlen + 3, 0, curlen, 0);
         }
         else draw(hw);
     }
@@ -787,7 +787,7 @@ struct object *obj;
             /* Should we overlay? */
             if (menu_overlay && MAXQUILL + 3 < lines - 3) {
                 over_win(cw, hw, MAXQUILL + 5, maxlen + 3,
-                            0, curlen, NULL);
+                            0, curlen, 0);
             }
             else draw(hw);
 
@@ -932,7 +932,7 @@ int which;
                 msg("The jug is empty");
                 break;
             }
-            quaff (obj->o_ac, NULL, NULL, FALSE);
+            quaff(obj->o_ac, 0, 0, FALSE);
             obj->o_ac = JUG_EMPTY;
             fuse (alchemy, obj, ALCHEMYTIME, AFTER);
             if (!(obj->o_flags & ISKNOW))
@@ -1139,7 +1139,7 @@ int which;
             str = "vibrates softly";
         msg("You rub the crystal and it %s...  ", str);
           /* cure him */
-        read_scroll(S_CURING, NULL, FALSE);
+        read_scroll(S_CURING, 0, FALSE);
           /* give him weird hands */
                 turn_on(player, CANHUH);
         msg("Your fingertips turn blue.  ");

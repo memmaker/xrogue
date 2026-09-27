@@ -87,7 +87,7 @@ dsrpt_player()
         if (purse > 0) {
             msg("Your gold goes flying everywhere!");
             do {
-                item = spec_item(GOLD, NULL, NULL, NULL);
+                item = spec_item(GOLD, 0, 0, 0);
                 obj = OBJPTR(item);
                 obj->o_count = min(purse, rnd(20)+1);
                 purse -= obj->o_count;

@@ -9,7 +9,7 @@ SRCS=$(sed -n '/^CFILES=/,/^$/p' Makefile | tr -d '\\\r' | sed 's/^CFILES=//')
 # ponytail: EMULATE_FUNCTION_POINTER_CASTS because ~36 daemon/fuse callbacks
 # take 0 args but daemon.c calls them with 1 (a WebAssembly trap); giving
 # each one a real signature would allow dropping it.
-emcc -O2 -fcommon -std=gnu89 -w -Wno-error=return-mismatch -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=int-conversion -Wno-error=incompatible-pointer-types -Iport \
+emcc -O2 -fcommon -std=gnu89 -Wno-error=return-mismatch -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=int-conversion -Wno-error=incompatible-pointer-types -Iport \
 	$SRCS port/wcurses.c port/tiles.c port/be_web.c \
 	-o "$OUT/xrogue-core.js" \
 	-sASYNCIFY -sASYNCIFY_STACK_SIZE=65536 -sSTACK_SIZE=1048576 \
