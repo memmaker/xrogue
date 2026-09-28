@@ -22,19 +22,14 @@
 	var panes = [];            /* {cv, ctx, cols, rows, cw, ch, pad, buf} */
 	var events = [];
 	var tiles = new Image(), tilesReady = false;
-	var running = false, saveReq = false;
+	var saveReq = false, app;
 	var cur = { p: -1, y: 0, x: 0 };
 	var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
 	var L = null, rects = {};
 
 	function $(id) { return document.getElementById(id); }
 	function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-	function status(msg, isError) {
-		var s = $('status');
-		s.textContent = msg;
-		s.className = isError ? 'error' : '';
-		s.hidden = !msg;
-	}
+	function status(msg, isError) { app.status(msg, isError); }
 
 	/* ---------- panes ---------- */
 
@@ -171,7 +166,7 @@
 	function saveLayout() {
 		clearTimeout(saveTimer);
 		saveTimer = setTimeout(function () {
-			try { Module.FS.writeFile(LAYOUT_FILE, JSON.stringify(L)); syncFiles(); }
+			try { Module.FS.writeFile(LAYOUT_FILE, JSON.stringify(L)); app.sync(); }
 			catch (err) { console.warn('layout not saved', err); }
 		}, 400);
 	}
@@ -271,7 +266,7 @@
 		a.play().catch(function () { });
 	}
 	function updateMusic() {
-		var on = L && L.audio.music && audio.town && running;
+		var on = L && L.audio.music && audio.town && app.running;
 		if (on && !audio.el) {
 			audio.el = new Audio('music/new_town.ogg');
 			audio.el.loop = true; audio.el.volume = 0.4;
@@ -340,16 +335,16 @@
 		prompt: function (s) { RvipWM.prompt.text(s); },
 		requestSave: function () { saveReq = true; },   /* also for testing */
 		wantSave: function () {
-			if (!saveReq || !running) return 0;
+			if (!saveReq || !app.running) return 0;
 			saveReq = false;
-			setTimeout(syncFiles, 0);           /* after the game wrote the file */
+			setTimeout(app.sync, 0);           /* after the game wrote the file */
 			return 1;
 		},
 		sound: function (name) { play(name); },
 		end: function (saved, dead) {
-			running = false;
+			app.running = false;
 			updateMusic();
-			syncFiles(function () {
+			app.sync(function () {
 				$('overlay-msg').textContent = saved ? 'Your game has been saved. Play again to continue it.'
 					: dead ? 'Your character died. The game is over.' : 'The game is over.';
 				$('overlay').hidden = false;
@@ -359,11 +354,7 @@
 
 	/* ---------- input ---------- */
 	function onKey(e) {
-		if (!$('help').hidden) {
-			if (e.key === 'Escape') { $('help').hidden = true; e.preventDefault(); }
-			return;
-		}
-		if (!running || e.isComposing || e.metaKey) return;
+		if (!app.running || e.isComposing || e.metaKey) return;
 		var k = e.key, code = e.code || '', m = /^Numpad(\d)$/.exec(code), c;
 		if (m) c = +m[1] ? NUMPAD[m[1]] : 48;
 		else if (code === 'NumpadEnter' || k === 'Enter') c = 13;
@@ -385,63 +376,16 @@
 		e.preventDefault();
 	}
 
-	/* ---------- saves: IndexedDB (IDBFS) ---------- */
-	var syncing = false, syncAgain = false, pendingCbs = [];
-	function syncFiles(cb) {
-		if (!Module.FS) { if (cb) cb(); return; }
-		if (typeof cb === 'function') pendingCbs.push(cb);
-		if (syncing) { syncAgain = true; return; }
-		syncing = true;
-		var cbs = pendingCbs; pendingCbs = [];
-		Module.FS.syncfs(false, function (err) {
-			syncing = false;
-			if (err) status('Saving to browser storage (IndexedDB) failed: ' + err + '. Use "Export save" to keep a copy.', true);
-			cbs.forEach(function (f) { f(err); });
-			if (syncAgain) { syncAgain = false; syncFiles(); }
-		});
-	}
+	/* ---------- saves: IndexedDB (IDBFS), help, crashes: ../rvip-app.js ---------- */
 	function hasSave() { try { Module.FS.stat(SAVE); return true; } catch (e) { return false; } }
-	function exportSave() {
-		if (running) saveReq = true;
-		setTimeout(function () {
-			if (!hasSave()) { status('There is no saved game yet.', true); return; }
-			var a = document.createElement('a');
-			a.href = URL.createObjectURL(new Blob([Module.FS.readFile(SAVE)], { type: 'application/octet-stream' }));
-			a.download = 'xrogue.sav';
-			document.body.appendChild(a); a.click();
-			setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-		}, running ? 1500 : 0);
-	}
-	function importSave(file) {
-		var r = new FileReader();
-		r.onload = function () {
-			if (!confirm('Replace the current game with "' + file.name + '"?')) return;
-			running = false;
-			Module.FS.writeFile(SAVE, new Uint8Array(r.result));
-			syncFiles(function (err) { if (!err) location.reload(); });
-		};
-		r.readAsArrayBuffer(file);
-	}
-	function newGame() {
-		if (!confirm('Delete the saved game in this browser and start a new one?')) return;
-		running = false;
-		if (hasSave()) Module.FS.unlink(SAVE);
-		syncFiles(function (err) { if (!err) location.reload(); });
-	}
-
-	/* ---------- help ---------- */
-	var helpLoaded = false;
-	function toggleHelp() {
-		var h = $('help');
-		h.hidden = !h.hidden;
-		if (!h.hidden && !helpLoaded) {
-			helpLoaded = true;
-			fetch('help.html').then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-				.then(function (t) { $('help-body').innerHTML = t; })
-				.catch(function (err) { helpLoaded = false; $('help-body').textContent = 'Could not load the guide (' + err + '). Press ? in the game for its own help.'; });
-		}
-		if (!h.hidden) $('help-body').focus();
-	}
+	app = RvipApp({
+		name: 'xrogue',
+		save: function () { return hasSave() ? SAVE : null; },
+		clear: function () { if (hasSave()) Module.FS.unlink(SAVE); },
+		put: function (file, data) { Module.FS.writeFile(SAVE, data); },
+		flush: function (done) { saveReq = true; setTimeout(done, 1500); },   /* the game saves at its next key wait */
+		helpText: 'Press ? in the game for its own help.'
+	});
 
 	/* ---------- startup ---------- */
 	var tilesDone = false, tilesWait = false;
@@ -467,13 +411,13 @@
 			});
 		}],
 		onRuntimeInitialized: function () {
-			running = true;
+			app.running = true;
 			status('');
 		},
 		print: function (s) { console.log(s); },
 		printErr: function (s) { console.warn(s); },
-		setStatus: function (s) { if (s && !running) status(s.replace(/\(\d+\/\d+\)/, '').trim() || 'Loading…'); },
-		onAbort: function (what) { crashed(what); }
+		setStatus: function (s) { if (s && !app.running) status(s.replace(/\(\d+\/\d+\)/, '').trim() || 'Loading…'); },
+		onAbort: function (what) { app.crashed(what); }
 	};
 	function tilesFinished(ok) {
 		tilesReady = ok; tilesDone = true;
@@ -560,36 +504,13 @@
 	if (TILESETS[tileset][0]) tiles.src = TILESETS[tileset][0]; else tilesDone = true;
 	loadFrame1();
 
-	function crashed(err) {
-		if (!running) return;
-		running = false;
-		var msg = (err && (err.message || err.reason && err.reason.message)) || String(err);
-		console.error('[xrogue] crash:', err);
-		status('The game crashed (' + msg + '). Reload the page to continue from the last autosave.', true);
-	}
-	window.addEventListener('unhandledrejection', function (e) {
-		/* exit() unwinds with an ExitStatus; that is the normal end */
-		if (e.reason && e.reason.name === 'ExitStatus') return;
-		crashed(e.reason);
-	});
-	window.addEventListener('error', function (e) {
-		if (e.error && e.error.name === 'ExitStatus') return;
-		if (e.error instanceof WebAssembly.RuntimeError || /xrogue-core/.test(e.filename || '')) crashed(e.error || e.message);
-	});
-
 	/* autosave: every 2 minutes and when the page is hidden */
 	setInterval(function () { saveReq = true; }, 120000);
 	document.addEventListener('visibilitychange', function () { if (document.hidden) saveReq = true; });
-	window.addEventListener('beforeunload', function (e) { if (running) { e.preventDefault(); e.returnValue = ''; } });
+	window.addEventListener('beforeunload', function (e) { if (app.running) { e.preventDefault(); e.returnValue = ''; } });
 
 	document.addEventListener('keydown', onKey);
 	document.addEventListener('DOMContentLoaded', function () {
-		$('btn-export').onclick = exportSave;
-		$('btn-import').onclick = function () { $('import-file').click(); };
-		$('import-file').onchange = function () { if (this.files[0]) importSave(this.files[0]); this.value = ''; };
-		$('btn-new').onclick = newGame;
-		$('btn-help').onclick = toggleHelp;
-		$('help-close').onclick = toggleHelp;
 		$('btn-tiles').onclick = toggleTileset;
 		renderTileset();
 		$('chk-sound').onchange = function () { toggleAudio('sound'); };
