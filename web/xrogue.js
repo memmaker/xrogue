@@ -156,6 +156,8 @@
 				if (s.font && d.wm && !d.wm.fs) d.wm.fs = s.font;   /* old layout: sizes were L.font */
 				if (typeof s.face === 'string') d.face = s.face;
 				if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
+				if (typeof s.name === 'string') d.name = s.name;     /* the player's name (asked once) */
+				if (typeof s.tiles === 'string') d.tiles = s.tiles;  /* the tile set, by name */
 				if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
 			}
 		} catch (err) { /* nothing saved yet */ }
@@ -249,8 +251,8 @@
 	}
 
 	function resetLayout() {
-		var a = L.audio, fc = L.face, mf = L.mapFace;
-		L = defaultLayout(); L.audio = a; L.face = fc; L.mapFace = mf; L.wm = wm.state();
+		var a = L.audio, fc = L.face, mf = L.mapFace, nm = L.name, ts = L.tiles;
+		L = defaultLayout(); L.audio = a; L.face = fc; L.mapFace = mf; L.name = nm; L.tiles = ts; L.wm = wm.state();
 		for (var p = 0; p < panes.length; p++) if (panes[p]) shape(p);
 		applyDom(); saveLayout();
 	}
@@ -403,20 +405,21 @@
 		xr: xr,
 		preRun: [function () {
 			var FS = Module.FS;
-			if (!tilesDone) { Module.addRunDependency('tiles'); tilesWait = true; }
+			Module.addRunDependency('tiles'); tilesWait = true;   /* the sheet loads once the layout says which */
 			FS.mkdirTree(DIR);
 			FS.mount(Module.IDBFS, {}, DIR);
 			FS.chdir('/xrogue');
 			Module.ENV.HOME = DIR;               /* xrogue.sav (md_gethomedir) */
 			Module.ENV.ROGUEHOME = DIR;          /* score file */
 			Module.ENV.USER = 'rogue';
-			var who = '';                        /* whoami: getpwuid() is web_user, so ask once */
-			try { who = localStorage.getItem('xrogue-name') || ''; } catch (err) { /* no storage */ }
-			if (!who) { who = (prompt('What is your name, adventurer?', '') || '').replace(/[,\n]/g, '').trim().slice(0, 30); try { if (who) localStorage.setItem('xrogue-name', who); } catch (err) { /* no storage */ } }
-			if (who) Module.ENV.ROGUEOPTS = 'name=' + who;
 			Module.addRunDependency('idbfs');
 			FS.syncfs(true, function (err) {
 				if (err) status('Could not read saved games from IndexedDB (' + err + '). Saving may not work in this browser mode.', true);
+				loadLayout();                    /* before the game: it holds the name and the tile set */
+				if (!L.name) { L.name = (prompt('What is your name, adventurer?', '') || '').replace(/[,\n]/g, '').trim().slice(0, 30); if (L.name) saveLayout(); }
+				if (L.name) Module.ENV.ROGUEOPTS = 'name=' + L.name;
+				TILESETS.forEach(function (t, i) { if (t[1] === L.tiles) tileset = i; });
+				startTiles();
 				Module.removeRunDependency('idbfs');
 			});
 		}],
@@ -465,11 +468,10 @@
 		for (var i = 0; i < T.cols * T.rows; i++) if (anim[T.t[i]] || anim[T.u[i]]) draw(P_MAP, (i / T.cols) | 0, i % T.cols);
 		drawCursor();
 	}, 500);
-	try { tileset = +localStorage.getItem('tileset') % TILESETS.length || 0; } catch (err) { /* no storage */ }
 	function renderTileset() { var b = $('btn-tiles'); if (b) b.textContent = 'Tiles: ' + TILESETS[tileset][1]; }
 	function toggleTileset() {
 		tileset = (tileset + 1) % TILESETS.length;
-		try { localStorage.setItem('tileset', tileset); } catch (err) { /* no storage */ }
+		L.tiles = TILESETS[tileset][1]; saveLayout();
 		renderTileset();
 		var redraw = function () {
 			[P_MAP, P_INV].forEach(function (p) { if (panes[p]) shape(p); });
@@ -511,8 +513,11 @@
 		s.style.cssText = 'image-rendering:pixelated;background:url(' + tiles.src + ') -' + (t % 32) * 16 + 'px -' + ((t / 32) | 0) * 16 + 'px';
 		return s;
 	}
-	if (TILESETS[tileset][0]) tiles.src = TILESETS[tileset][0]; else tilesDone = true;
-	loadFrame1();
+	function startTiles() {
+		renderTileset(); loadFrame1();
+		if (TILESETS[tileset][0]) tiles.src = TILESETS[tileset][0];
+		else { tilesDone = true; if (tilesWait) Module.removeRunDependency('tiles'); }   /* None: text */
+	}
 
 	/* autosave: every 2 minutes and when the page is hidden */
 	setInterval(function () { saveReq = true; }, 120000);
