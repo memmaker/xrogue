@@ -222,12 +222,12 @@ void wc_inv(WINDOW *p)
 
     memcpy(save, prbuf, sizeof save);
     for (l = pack; l && y < p->maxy - 1; l = next(l), y++, ch = ch == 'z' ? 'A' : ch + 1) {
-        if (ic) mvwprintw(p, y, 0, "%c)   %s", ch, inv_name(OBJPTR(l), FALSE));  /* cols 2-4: icon */
+        if (ic) mvwprintw(p, y, 0, "%c) %s", ch, inv_name(OBJPTR(l), FALSE));  /* the page puts the icon first */
         else mvwprintw(p, y, 0, "%c) %c %s", ch, (OBJPTR(l))->o_type, inv_name(OBJPTR(l), FALSE));
         wclrtoeol(p);
-        be_invfg(y, wc_kind((OBJPTR(l))->o_type)->css, ic ? wc_obj_tile(OBJPTR(l)) : -1);
+        wc_rowattr(P_INV, y, wc_kind((OBJPTR(l))->o_type)->css, ic ? wc_obj_tile(OBJPTR(l)) : -1);
     }
-    for (; y < p->maxy; y++) { be_invfg(y, "", -1); if (y < p->maxy - 1) { wmove(p, y, 0); wclrtoeol(p); } }
+    for (; y < p->maxy; y++) { wc_rowattr(P_INV, y, "", -1); if (y < p->maxy - 1) { wmove(p, y, 0); wclrtoeol(p); } }
     mvwprintw(p, y, 0, "%d/%d items, %ld gold", inpack, MAXPACK, purse);
     wclrtoeol(p);
     memcpy(prbuf, save, sizeof save);

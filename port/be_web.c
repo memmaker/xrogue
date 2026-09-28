@@ -48,17 +48,10 @@ void be_sound(const char *s) { if (*s) js_sound(s); }
 
 /* Visible window (RVIP 5b): monsters and objects drawn on the player's
  * view right now (invisible monsters and mimics fail the screen check) */
-EM_JS(void, js_extent, (int p, int c, int r), { Module.xr.extent(p, c, r); });
-void be_extent(int p, int cols, int rows) { js_extent(p, cols, rows); }
-EM_JS(void, js_invfg, (int y, const char *c, int t), { Module.xr.invfg(y, UTF8ToString(c), t); });
-void be_invfg(int y, const char *css, int t)
-{
-    static const char *last[64];
-    static int lastt[64];
-    if (y < 64 && (last[y] != css || lastt[y] != t)) { last[y] = css; lastt[y] = t; js_invfg(y, css, t); }
-}
-EM_JS(void, js_rowfg, (int p, int y, const char *c), { Module.xr.rowfg(p, y, UTF8ToString(c)); });
-void be_rowfg(int p, int y, const char *css) { js_rowfg(p, y, css); }
+EM_JS(void, js_line, (int p, int y, const char *s, const char *c, int t), { Module.xr.line(p, y, UTF8ToString(s), UTF8ToString(c), t); });
+void be_line(int p, int y, const char *s, const char *css, int tile) { js_line(p, y, s, css, tile); }
+EM_JS(void, js_rows, (int p, int n), { Module.xr.rows(p, n); });
+void be_rows(int p, int n) { js_rows(p, n); }
 EM_JS(int, be_icons, (void), { return Module.xr.icons(); });
 EM_JS(void, js_vis, (const char *s), { if (Module.xr.vis) Module.xr.vis(UTF8ToString(s)); });
 static void send_visible(void)

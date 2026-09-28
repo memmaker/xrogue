@@ -29,7 +29,6 @@ typedef struct _win {
     short *first, *last;/* changed range per line, -1 = none */
     chtype *c;
     const char **fg;    /* row colour (css) set by the game, NULL = default */
-    int ext_c, ext_r;   /* extent last sent with be_extent() */
 } WINDOW;
 
 extern WINDOW *stdscr, *curscr;
@@ -142,11 +141,13 @@ void be_end(void);
 int  tile_for(int y, int x, int ch, int *under);  /* tiles.c: -1 = text */
 struct wc_kind { int type; const char *name, *css; };
 const struct wc_kind *wc_kind(int type);         /* tiles.c */
-void be_invfg(int y, const char *css, int tile);  /* inventory row colour and icon */
-void be_rowfg(int p, int y, const char *css);     /* pop-up row colour */
-void be_extent(int p, int cols, int rows); /* text pane trimmed: cells in use (RVIP W0) */
-int  wc_rowfg(WINDOW *w, int y, const char *css); /* per-row colour, cleared by werase */
-int  be_icons(void);                      /* a tile set is shown: inventory rows get icons */
+/* text panes (RVIP W0): row y as trimmed text, standout between \x01 and \x02,
+ * row colour ("" = default), icon tile (-1 none); and the rows in use */
+void be_line(int p, int y, const char *text, const char *css, int tile);
+void be_rows(int p, int rows);
+void wc_rowattr(int p, int y, const char *css, int tile); /* a text pane row's colour and icon */
+int be_icons(void);                                /* item icons shown in the Inventory pane */
+int wc_rowfg(WINDOW *w, int y, const char *css);
 void wc_inv(WINDOW *);                            /* tiles.c */
 struct object; struct thing;
 int wc_obj_tile(struct object *);                 /* tiles.c: icon tile of an item */

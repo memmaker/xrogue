@@ -291,9 +291,18 @@ int be_getkey(int wait)
 void be_sound(const char *s) { }
 
 void be_end(void) { if (dpy) XCloseDisplay(dpy); dpy = NULL; }
-void be_invfg(int y, const char *css, int tile) { }
+void be_line(int p, int y, const char *s, const char *css, int tile)
+{
+    chtype so = 0;
+    int x;
+    (void)css; (void)tile;
+    for (x = 0; x < P[p].cols; x++) {
+        while (*s == 1 || *s == 2) so = *s++ == 1 ? A_STANDOUT : 0;
+        be_put(p, y, x, (*s ? (unsigned char)*s++ : ' ') | so, -1, -1);
+    }
+}
 int be_icons(void) { return 0; }
-void be_rowfg(int p, int y, const char *css) { }
-void be_extent(int p, int cols, int rows) { }   /* web only: X11 panes keep their full size */
+void be_rows(int p, int rows) { }   /* web only: X11 panes keep their full size */
 
 void be_prompt(const char *s) { }   /* web only: the prompt line over the map */
+void be_run_end(const char *ev, const char *killer, long score) { (void)ev; (void)killer; (void)score; }   /* web-only hook */
