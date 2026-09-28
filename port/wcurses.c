@@ -258,6 +258,17 @@ static void pflush(int i)
         for (x = p->first[y]; x <= p->last[y]; x++) be_put(i, y, x, p->c[y * p->maxx + x], -1, -1);
         p->first[y] = p->last[y] = -1;
     }
+    /* text panes are sent trimmed (RVIP W0): the cells in use, no blank
+     * columns after the text and no empty rows below it */
+    if (p && i != P_POP) {
+        int cols = 0, rows = 0;
+        for (y = 0; y < p->maxy; y++)
+            for (x = 0; x < p->maxx; x++) {
+                chtype ch = p->c[y * p->maxx + x];
+                if ((ch & A_CHARTEXT) > ' ' || (ch & A_STANDOUT)) { if (x + 1 > cols) cols = x + 1; rows = y + 1; }
+            }
+        if (cols != p->ext_c || rows != p->ext_r) { p->ext_c = cols; p->ext_r = rows; be_extent(i, cols ? cols : 1, rows ? rows : 1); }
+    }
 }
 
 static void put(int y, int x, chtype ch, int map)

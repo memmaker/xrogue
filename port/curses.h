@@ -29,6 +29,7 @@ typedef struct _win {
     short *first, *last;/* changed range per line, -1 = none */
     chtype *c;
     const char **fg;    /* row colour (css) set by the game, NULL = default */
+    int ext_c, ext_r;   /* extent last sent with be_extent() */
 } WINDOW;
 
 extern WINDOW *stdscr, *curscr;
@@ -143,6 +144,7 @@ struct wc_kind { int type; const char *name, *css; };
 const struct wc_kind *wc_kind(int type);         /* tiles.c */
 void be_invfg(int y, const char *css, int tile);  /* inventory row colour and icon */
 void be_rowfg(int p, int y, const char *css);     /* pop-up row colour */
+void be_extent(int p, int cols, int rows); /* text pane trimmed: cells in use (RVIP W0) */
 int  wc_rowfg(WINDOW *w, int y, const char *css); /* per-row colour, cleared by werase */
 int  be_icons(void);                      /* a tile set is shown: inventory rows get icons */
 void wc_inv(WINDOW *);                            /* tiles.c */

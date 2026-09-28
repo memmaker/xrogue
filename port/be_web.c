@@ -48,6 +48,8 @@ void be_sound(const char *s) { if (*s) js_sound(s); }
 
 /* Visible window (RVIP 5b): monsters and objects drawn on the player's
  * view right now (invisible monsters and mimics fail the screen check) */
+EM_JS(void, js_extent, (int p, int c, int r), { Module.xr.extent(p, c, r); });
+void be_extent(int p, int cols, int rows) { js_extent(p, cols, rows); }
 EM_JS(void, js_invfg, (int y, const char *c, int t), { Module.xr.invfg(y, UTF8ToString(c), t); });
 void be_invfg(int y, const char *css, int t)
 {
