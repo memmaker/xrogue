@@ -19,10 +19,8 @@ emcc -O2 -fcommon -std=gnu89 -Wno-error=return-mismatch -Wno-error=implicit-func
 	-sEMULATE_FUNCTION_POINTER_CASTS \
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 cp web/index.html web/xrogue.js port/tiles.png port/tiles-dawn.png port/tiles-dawn-1.png "$OUT/"
-# sound effects (message text -> Dubtrain samples) and the town music
-mkdir -p "$OUT/sound" "$OUT/music"
-python3 web/sounds.py "$OUT/sound"
-cp ~/Projects/heavenAndHell/files/mods/heavenandhell/music/new_town.ogg "$OUT/music/"
+# sound effects synthesized for this game (be_sound() events); no music
+python3 web/mksounds.py "$OUT/sound"
 python3 web/make-help.py > "$OUT/help.html"
 ls -la "$OUT"
 # text fonts: the index page's fonts/ (served at ../fonts/ next to the games)

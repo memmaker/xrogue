@@ -157,7 +157,7 @@
 		var statH = TITLE_H + BORDER + 2 * Math.round(font * 1.3) + 4;
 		return { v: 1, tile: tile, auto: true,
 			split: { bottom: (mapH + GUT / 2) / H, side: 0.5, stat: clamp((lower - statH - GUT / 2) / lower, 0.3, 0.95) },
-			audio: { sound: false, music: false } };
+			audio: { sound: false } };
 	}
 
 	function loadLayout() {
@@ -176,7 +176,7 @@
 				if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
 				if (typeof s.name === 'string') d.name = s.name;     /* the player's name (asked once) */
 				if (typeof s.tiles === 'string') d.tiles = s.tiles;  /* the tile set, by name */
-				if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
+				if (s.audio) d.audio = { sound: s.audio.sound === true };
 			}
 		} catch (err) { /* nothing saved yet */ }
 		L = d;
@@ -254,10 +254,9 @@
 	}
 
 	/* ---------- sound ---------- */
-	/* sound events come from the game (be_sound() calls in the sources), named
-	 * like the Dubtrain Angband Sound Pack's (web/sounds.py copies the samples) */
-	var audio = { cfg: {}, cache: {}, level: -1, town: false, el: null };
-	fetch('sound/sounds.json').then(function (r) { return r.json(); }).then(function (c) { audio.cfg = c; }).catch(function () { });
+	/* sound events come from the game (be_sound() calls in the sources); the
+	 * samples are synthesized for this game at build time (web/mksounds.py) */
+	var audio = { cfg: null, cache: {}, level: -1 };
 
 	function play(name) {
 		var files = L && L.audio.sound && audio.cfg[name];
@@ -268,23 +267,17 @@
 		a.volume = 0.6;
 		a.play().catch(function () { });
 	}
-	function updateMusic() {
-		var on = L && L.audio.music && audio.town && app.running;
-		if (on && !audio.el) {
-			audio.el = new Audio('music/new_town.ogg');
-			audio.el.loop = true; audio.el.volume = 0.4;
-		}
-		if (!audio.el) return;
-		if (on) audio.el.play().catch(function () { }); else audio.el.pause();
-	}
 	function toggleAudio(k) {
 		L.audio[k] = !L.audio[k];
-		renderAudio(); updateMusic(); saveLayout();
+		renderAudio(); saveLayout();
 	}
 	function renderAudio() {
-		var a = L ? L.audio : { sound: false, music: false };
+		var a = L ? L.audio : { sound: false };
 		$('chk-sound').checked = a.sound;
-		$('chk-music').checked = a.music;
+		if (a.sound && !audio.cfg) {   /* sounds.json only once effects are on */
+			audio.cfg = {};
+			fetch('sound/sounds.json').then(function (r) { return r.json(); }).then(function (c) { audio.cfg = c; }).catch(function () { });
+		}
 	}
 
 	/* ---------- called by the game (port/be_web.c) ---------- */
@@ -331,7 +324,6 @@
 			drawCursor();
 			xr.lastCur = cur.p >= 0 ? { p: cur.p, y: cur.y, x: cur.x } : null;
 			audio.level = level;
-			if (!!town !== audio.town) { audio.town = !!town; updateMusic(); }
 		},
 		icons: function () { return tilesReady ? 1 : 0; },
 		vis: function (s) { RvipWM.visible(document.querySelector('#t-vis .body'), s, visIcon); },
@@ -347,7 +339,6 @@
 		sound: function (name) { play(name); },
 		end: function (saved, dead) {
 			app.running = false;
-			updateMusic();
 			app.sync(function () {
 				$('overlay-msg').textContent = saved ? 'Your game has been saved. Play again to continue it.'
 					: dead ? 'Your character died. The game is over.' : 'The game is over.';
@@ -526,7 +517,6 @@
 		$('btn-tiles').onclick = toggleTileset;
 		renderTileset();
 		$('chk-sound').onchange = function () { toggleAudio('sound'); };
-		$('chk-music').onchange = function () { toggleAudio('music'); };
 		RvipWM.dropdown($('btn-audio'), $('menu-audio'));
 		RvipWM.dropdown($('btn-file'), $('menu-file'));
 		fetch('fonts.json').then(function (r) { return r.json(); }).then(function (list) {

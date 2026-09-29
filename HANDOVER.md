@@ -149,9 +149,8 @@ ASan binary and objects removed.
   with `S` (`wc_saved` set in `save_game()`).
 - Prompt line: `be_prompt(r)` from `msg_refresh()` in `port/wcurses.c`
   (row 0 text), `js_key(wc_cmd_prompt)` in `port/be_web.c`.
-- Sound: `be_sound()` calls in the game sources, named like the Dubtrain
-  pack's events; `web/sounds.py` copies the used samples + `sounds.json`.
-  Music (`new_town.ogg`) on trading-post and outside levels.
+- Sound: `be_sound()` calls in the game sources; `web/mksounds.py`
+  synthesizes a wav per event + `sounds.json` (see "Sound" below). No music.
 - wasm fixes: `void` prototypes for `picky_inven`, `init_terrain`,
   `do_terrain`, `explore_reset`; `give(NULL)`/`fright(NULL)`; call argument
   types matched to definitions; `-sEMULATE_FUNCTION_POINTER_CASTS` for the
@@ -159,9 +158,6 @@ ASan binary and objects removed.
   `ponytail:` note in `build.sh`.
 
 ## Open / nice to have
-- Sound uses Dubtrain (DASP) samples, but Stage 6 allows those only for the
-  Angband family; XRogue needs upstream audio (web search, note the result)
-  or no Audio ▾.
 - Mouse clicks (menus, walk to a map cell).
 - Give each daemon/fuse function a real `(arg)` signature, then drop
   `EMULATE_FUNCTION_POINTER_CASTS`.
@@ -184,3 +180,13 @@ ASan binary and objects removed.
 - Base: **XRogue 8.0.3**
 - Original source: https://github.com/memmaker/xrogue/tree/544e05a (memmaker/xrogue master, commit 544e05a (dump of the original svn r1490))
 - Our changes: https://github.com/memmaker/xrogue/compare/master...rvip-port (memmaker/xrogue, branch rvip-port)
+
+## Sound (Stage 6, 2026-09-29)
+- Web search for sound effects or music released for XRogue or its versions
+  (official sources, ports, fan packs): none found. The Epyx-era Rogue
+  ports had their own sounds but they are commercial, not redistributable;
+  the rest are generic stock packs, not made for this game.
+- So the effects are synthesized for this game at build time by
+  `web/mksounds.py` (stdlib only; per-game palette: waveform, pitch, tempo,
+  seed) for the `be_sound()` events; no DASP/Dubtrain samples, no music
+  (the town loop and the Music toggle are gone). Off by default, Audio ▾.

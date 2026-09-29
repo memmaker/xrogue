@@ -28,7 +28,7 @@ SAVING = '''<ul>
 <li>When your character dies or you quit with <kbd>Q</kbd>, the save is deleted: death is final.</li>
 <li>Each browser keeps <strong>one game</strong>. <em>New game</em> deletes it and starts over.</li>
 <li><em>Export save</em> downloads the save file; <em>Import save</em> loads one. Use them for a backup or to move a game to another browser or computer.</li>
-<li>Window layout, zoom and the sound/music switches are stored in the same browser storage.</li>
+<li>Window layout, zoom and the sound switch is stored in the same browser storage.</li>
 <li>Private/incognito windows and "clear site data" delete the stored game. Export first if it matters.</li>
 </ul>'''
 
@@ -36,7 +36,7 @@ WEB = '''<ul>
 <li><strong>Windows:</strong> the tiled map on top; Messages (with history) and Status below on the left; Inventory on the right. Help, lists and menus pop up over the map.</li>
 <li><strong>Resize windows</strong> by dragging the gaps between them; a window's contents shrink to fit when it is too small. <em>Reset windows</em> puts everything back.</li>
 <li><strong>Zoom:</strong> <em>A−</em> / <em>A+</em> on the Map title bar (shown on hover) change the size of the map tiles (up to 96 px); when the map is bigger than its window it scrolls to follow you. Hover over a text window's title to show its <em>A−</em> / <em>A+</em> buttons.</li>
-<li><strong>Sound</strong> and <strong>Music</strong> are off until you switch them on in the top bar. Music plays in the trading post and outdoors.</li>
+<li><strong>Sound effects</strong> are off until you switch them on under <em>Audio ▾</em>. They are synthesized for this port (XRogue has no sound of its own); there is no music.</li>
 <li><strong>Keys:</strong> <kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd><kbd>y</kbd><kbd>u</kbd><kbd>b</kbd><kbd>n</kbd>, the arrow keys or the numeric keypad move you; capital letters run.</li>
 <li>Browsers keep a few shortcuts for themselves (<kbd>Ctrl+W</kbd>, <kbd>Ctrl+T</kbd>, <kbd>Ctrl+N</kbd>, and <kbd>Cmd</kbd> shortcuts on a Mac), so those never reach the game.</li>
 <li>If the game ever crashes, a message appears at the top; reload the page to continue from the last autosave.</li>
