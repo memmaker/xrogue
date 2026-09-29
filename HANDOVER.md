@@ -138,7 +138,7 @@ ASan binary and objects removed.
 - `port/be_web.c` (EM_JS → `Module.xr` in `web/xrogue.js`), input via
   Asyncify (`emscripten_sleep`). Windows via `RvipWM`: Map, Messages, Status,
   Inventory, Visible. Text windows are HTML lines from the game
-  (`be_line(pane, y, text, css, tile)`, trimmed via `be_extent`); only the
+  (`be_line(pane, y, text, css, tile)`, trimmed in `port/wcurses.c`); only the
   map is a canvas. Pop-ups via `RvipWM.popup`. Tiles: NetHack or DawnLike
   (Tiles button, name kept in the IndexedDB layout file).
 - Saves: IDBFS at `/xrogue/save` (`HOME`/`ROGUEHOME` via `ENV`), shared
