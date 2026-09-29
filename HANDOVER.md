@@ -1,20 +1,21 @@
 # XRogue 8.0.3 — RVIP handover
 
-State as of 2026-09-25 (second session: panes, explore fix, Enter menu,
-inventory cursor, ASan, save fixes). Source: `~/Downloads/xrogue8.0.3-src.tar.gz`, unpacked
-here and committed as the first git commit ("xrogue 8.0.3 upstream"), so
-`git diff` shows every change made for the port.
+Source: `~/Downloads/xrogue8.0.3-src.tar.gz` (= memmaker/xrogue master
+544e05a); the port is branch `rvip-port`, so `git diff master` shows every
+change. Live: https://ruzzoli.de/roguelikes/xrogue/
 
 XRogue is a **curses** game (Rogue → Advanced Rogue → XRogue), not an
 Angband variant: no z-term, no subwindows, no pref files. RVIP steps were
-adapted accordingly (see "Rogue variants" in `~/Games/rvip-tools/RVIP.md`).
+adapted accordingly (case R, RVIP.md 5.5 "Curses shims").
 
 ## Build / run
 
 ```sh
 cd ~/Games/xrogue
-make xrogue-x11          # macOS + XQuartz, curses shim + NetHack tiles
+make xrogue-x11          # native X11 (testing): curses shim + NetHack tiles
 python3 port/mktiles.py  # regenerate port/tiles.png, tiles.rgba, tilemap.h
+python3 port/mkdawn.py   # DawnLike set: tiles-dawn.png/.rgba (TILESET=dawn ./play.sh)
+sh web/build.sh && sh web/deploy.sh
 ```
 `make xrogue` (plain ncurses, terminal) still builds with the old flags
 (`CFLAGS="-std=gnu89 -w -Wno-…" CRLIB=-lncurses`), but it is not the target.
@@ -40,9 +41,6 @@ Don't use `ROGUEOPTS=name=…`: upstream option parsing is buggy.
 - `!` (shell escape) removed: it also fell through into "move left".
 - Flags: `-std=gnu89 -w -Wno-implicit-function-declaration -Wno-implicit-int
   -Wno-return-type -Wno-int-conversion -Wno-incompatible-pointer-types`.
-- **Still open for the web build:** ~246 implicitly declared functions.
-  WebAssembly traps on signature mismatches, so expect to generate a full
-  prototype header (or fix per the rogue2wasm "Code fixes" section).
 
 ### Curses shim (`port/`)
 - `curses.h` / `wcurses.c`: in-memory WINDOWs with real curses refresh
@@ -77,16 +75,18 @@ Don't use `ROGUEOPTS=name=…`: upstream option parsing is buggy.
   9×18 bitmap font unreadable).
 - Keypad → `KEY_*` (game already handles them as moves), KP_5 → `KEY_B2`.
 
-### Gameplay (RVIP 2/3)
+### Gameplay
 - `explore.c`: `x` = auto-explore (BFS over the player's view `cw`,
   targets = unvisited items and cells next to unknown space, diagonal rule
   copied from `diag_ok`, stops on visible non-friendly monster, any
   message, any key). `<`/`>` off stairs walk to the nearest known `%`
   (XRogue's stairs go both ways) and take it; on stairs/trapdoor/pool/
   post/wormhole or when phasing, the original command runs.
-  Reset in `new_level()`. Help list (`help.c`) updated. Tested in session 2 (see Explore fix).
+  Reset in `new_level()`. Help list (`help.c`) updated. A frontier cell
+  stays a target until the hero **stood on** it (not "stood next to it",
+  which stopped at every door and corridor end).
 
-### Panes (done, session 2)
+### Panes
 Routing in `wrefresh()` (`port/wcurses.c`) by window:
 
 | game window | goes to |
@@ -101,19 +101,14 @@ Backend API: `be_init(pane,…)`, `be_put(pane,…)`, `be_cursor(pane,…)`,
 `be_popup(rows, cols)`. Default layout in `place()` (`be_x11.c`): map on top
 at 0,0, Messages + Status below on the left, Inventory on the right.
 
-### Explore fix
-A frontier cell stays a target until the hero **stood on** it (the old
-"stood next to it" rule stopped at every door and corridor end). Tested:
-crosses corridors, stops for monsters, `>` walks to stairs in the shop.
-
-### Enter menu (3b, done)
+### Enter menu
 `cmd_menu()` in `help.c`: groups = blank-line blocks of `helpstr[]`
 (`cmd_groups[]` names them), then the group's commands; returns the key into
 `command()`. Shared `menu()` (cursor, scroll, letters, numpad) is also used
-by 3c. Shell-escape entry removed from the help list; long entries shortened
+by the inventory. Shell-escape entry removed from the help list; long entries shortened
 (the help list is two 40-column halves).
 
-### Inventory (3c, done)
+### Inventory
 - `i` → `inv_menu()` (`help.c`): letter / `+` = main action, `-` drop,
   Enter/5 = action menu (`item_actions()`), Esc/0/. close. The chosen item
   goes to `inv_pick`, which `get_item()` returns to the command, so every
@@ -124,13 +119,13 @@ by 3c. Shell-escape entry removed from the help list; long entries shortened
   command, so `*` / Ctrl+letter do nothing extra. Shift+letter isn't drop
   (item 27 is `A`).
 
-### ASan (done)
+### ASan
 Full session (shop, menus, explore, save, restore) under ASan: no reports.
 Found instead: `rs_read_long/ulong` read 4 bytes into an 8-byte `long`
 (gold/exp garbage after restore) → fixed; saves ignored `$HOME` → fixed.
 ASan binary and objects removed.
 
-### Launcher, Desktop app, docs (done, session 3)
+### Launcher, Desktop app, docs
 - `play.sh`: `HOME`/`ROGUEHOME` = `save/`; continues `save/xrogue.sav` if
   it exists. Layout fits 1440×932 (map 0,0; Messages 20+4 rows and Status
   below it on the left; Inventory 28 rows on the right).
@@ -139,44 +134,38 @@ ASan binary and objects removed.
 - Docs: `xrogue.html` entry in `build-docs.py` (key list parsed from
   `helpstr[]` by `parse_helpstr()`), guide + saving in `guides.py`.
 
-### Web (done, session 3): https://ruzzoli.de/roguelikes/xrogue/
+### Web
 - `port/be_web.c` (EM_JS → `Module.xr` in `web/xrogue.js`), input via
-  Asyncify (`emscripten_sleep`). Panes have fixed cols/rows, so no z-term
-  resize pipeline: a window smaller than its pane scales the canvas down.
-- Map zoom goes up to 96 px tiles; the map never shrinks: when bigger than
-  its window it scrolls to keep the hero in the middle half
-  (`scrollMap()`, hero position passed by `be_flush()`).
-- Page: `web/index.html` (Quickband's styles), tiling map / Messages /
-  Status / Inventory with 3 draggable gutters, pop-up canvas over the map,
-  Zoom ± (map tiles), A−/A+ per text window, Reset windows, Help
-  (`web/make-help.py` from the Docs page), Sound/Music off by default,
-  Export/Import save, New game, crash message, leave warning.
-- Saves: IDBFS at `/xrogue/save` (`HOME`/`ROGUEHOME` via `ENV`). Web only:
-  restore doesn't delete the file (it's the autosave), `main()` continues
-  it, `autosave()` in `be_web.c` runs every 2 min / on tab hide while the
-  game waits for a command (`wc_cmd_prompt`), `be_end()` deletes it unless
-  the player saved with `S` (`wc_saved` set in `save_game()`).
-- Sound: XRogue has no events; `SOUNDS` regexes in `xrogue.js` map message
-  text (`be_message()` from the shim) to Dubtrain events, level changes to
-  stairs; `web/sounds.py` copies only the used samples + `sounds.json`.
+  Asyncify (`emscripten_sleep`). Windows via `RvipWM`: Map, Messages, Status,
+  Inventory, Visible. Text windows are HTML lines from the game
+  (`be_line(pane, y, text, css, tile)`, trimmed via `be_extent`); only the
+  map is a canvas. Pop-ups via `RvipWM.popup`. Tiles: NetHack or DawnLike
+  (Tiles button, name kept in the IndexedDB layout file).
+- Saves: IDBFS at `/xrogue/save` (`HOME`/`ROGUEHOME` via `ENV`), shared
+  `../rvip-app.js` for sync/Export/Import/crash. Web only: restore doesn't
+  delete the file (it's the autosave), `main()` continues it, `autosave()` in
+  `be_web.c` runs every 2 min / on tab hide while the game waits for a
+  command (`wc_cmd_prompt`), `be_end()` deletes it unless the player saved
+  with `S` (`wc_saved` set in `save_game()`).
+- Prompt line: `be_prompt(r)` from `msg_refresh()` in `port/wcurses.c`
+  (row 0 text), `js_key(wc_cmd_prompt)` in `port/be_web.c`.
+- Sound: `be_sound()` calls in the game sources, named like the Dubtrain
+  pack's events; `web/sounds.py` copies the used samples + `sounds.json`.
   Music (`new_town.ogg`) on trading-post and outside levels.
 - wasm fixes: `void` prototypes for `picky_inven`, `init_terrain`,
-  `do_terrain`, `explore_reset`; `give(NULL)`/`fright(NULL)`;
-  `-sEMULATE_FUNCTION_POINTER_CASTS` for the ~36 daemon/fuse callbacks
-  (0-arg functions called with 1 arg) — `ponytail:` note in `build.sh`.
-- Build `sh web/build.sh`, deploy `sh web/deploy.sh`; the generic nginx
-  `location ^~ /roguelikes/` block already covers it. Card + `xrogue.png`
-  added to `~/Games/roguelikes-index`.
-- Tested locally and live: birth, shop, Enter menu pop-up, explore,
-  `S` save → reload → "Welcome back", autosave mid-game, `Q` quit deletes
-  the save, Help (6 sections), sound toggle, layout file persisted, no
-  console errors.
+  `do_terrain`, `explore_reset`; `give(NULL)`/`fright(NULL)`; call argument
+  types matched to definitions; `-sEMULATE_FUNCTION_POINTER_CASTS` for the
+  ~36 daemon/fuse callbacks (0-arg functions called with 1 arg) —
+  `ponytail:` note in `build.sh`.
 
 ## Open / nice to have
+- Sound uses Dubtrain (DASP) samples, but Stage 6 allows those only for the
+  Angband family; XRogue needs upstream audio (web search, note the result)
+  or no Audio ▾.
 - Mouse clicks (menus, walk to a map cell).
 - Give each daemon/fuse function a real `(arg)` signature, then drop
   `EMULATE_FUNCTION_POINTER_CASTS`.
-- A monster recall / visible-monsters pane.
+- A monster recall pane.
 
 ## Testing notes
 - Test script pattern: start with isolated `HOME`, find the window with
@@ -189,17 +178,9 @@ ASan binary and objects removed.
   `question`, `asterisk`, `space`, `Down`.
 - `state.c` and `main.c` have some CRLF lines: edit them in binary / with
   sed, not Python text mode (it silently converts).
-- Scratch test helper used in session 2 (not in the repo): start with
-  isolated HOME, `buy` = walk along the hero's row to the nearest shop item
-  and `#` `y`.
 
 ## Source and changes
 
 - Base: **XRogue 8.0.3**
 - Original source: https://github.com/memmaker/xrogue/tree/544e05a (memmaker/xrogue master, commit 544e05a (dump of the original svn r1490))
 - Our changes: https://github.com/memmaker/xrogue/compare/master...rvip-port (memmaker/xrogue, branch rvip-port)
-- Prompt line (RVIP step 5 / W4, 2026-09-26): the live message row is shown in a
-  box over the map by `RvipWM.prompt` (rvip-wm.js). A key hides it only while
-  the game waits for a command, so a question stays up until answered.
-  Here: `be_prompt(r)` from `msg_refresh()` in `port/wcurses.c` (row 0 text),
-  `js_key(wc_cmd_prompt)` in `port/be_web.c`; `be_x11.c` has an empty stub.
